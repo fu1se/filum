@@ -122,8 +122,8 @@ private fun mjpegHtml(url: String) = """
 const URL_=${jsString(url)};
 const i=document.getElementById('i'), s=document.getElementById('s');
 function go(){ i.src=URL_+(URL_.includes('?')?'&':'?')+'_t='+Date.now(); }
-i.onload=()=>{s.style.display='none'};
-i.onerror=()=>{s.style.display='block';s.textContent=${jsString(tr(R.string.camera_unavailable_retry))};setTimeout(go,3000)};
+i.onload=()=>{s.style.display='none';i.style.visibility='visible'};
+i.onerror=()=>{i.style.visibility='hidden';s.style.display='block';s.textContent=${jsString(tr(R.string.camera_unavailable_retry))};setTimeout(go,3000)};
 go();
 </script></body></html>
 """

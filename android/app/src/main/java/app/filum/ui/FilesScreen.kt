@@ -92,7 +92,7 @@ fun FilesScreen(files: List<GcodeFile>?, state: PrinterState, connected: Boolean
             },
             confirmButton = {
                 TextButton(onClick = { client.printFile(f.path); toPrint = null }, enabled = !state.hasActiveJob) {
-                    Text(tr(R.string.status_printing))
+                    Text(tr(R.string.action_print))
                 }
             },
             dismissButton = { TextButton(onClick = { toPrint = null }) { Text(tr(R.string.cancel)) } },

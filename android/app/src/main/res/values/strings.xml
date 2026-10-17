@@ -306,7 +306,7 @@
     <string name="extrude">Extrude</string>
     <string name="retract">Retract</string>
     <string name="nozzle_mm" formatted="false">%.1f mm nozzle</string>
-    <string name="nozzle_confirm_1">The printer will remember the new diameter (SET_NOZZLE_DIAMETER). The printer screen will warn </string>
+    <string name="nozzle_confirm_1">The printer will remember the new diameter (SET_NOZZLE_DIAMETER). The printer screen will warn\u0020</string>
     <string name="nozzle_confirm_2" formatted="false">about files sliced for another nozzle, and the app\'s slicer will pick the printer preset for %.1f mm.</string>
     <string name="apply">Set</string>
     <string name="elapsed">Elapsed</string>
@@ -326,7 +326,7 @@
     <string name="hide">Hide</string>
     <string name="files_count">Files: %1$s</string>
     <string name="files_no_list">No list received</string>
-    <string name="refresh_spaced"> Refresh</string>
+    <string name="refresh_spaced">\u0020Refresh</string>
     <string name="files_hint_1">Tap “Refresh” to request the file list from the printer.\n</string>
     <string name="files_hint_2">If the list doesn\'t arrive, check the printer\'s reply in the Console tab.</string>
     <string name="files_empty">There are no G-code files on the printer.</string>
@@ -384,7 +384,7 @@
     <string name="n_plates">%1$s plates</string>
     <string name="all">All</string>
     <string name="plate_n">Plate %1$s</string>
-    <string name="slicer_empty_1">Pick an STL / 3MF / STEP on the phone, a MakerWorld model or a recent one. </string>
+    <string name="slicer_empty_1">Pick an STL / 3MF / STEP on the phone, a MakerWorld model or a recent one.\u0020</string>
     <string name="slicer_empty_2">You can also send files here with “Share”.</string>
     <string name="recent">Recent</string>
     <string name="orca_sync_presets">orca-sync presets: %1$s</string>
@@ -455,4 +455,8 @@
     <string name="camera_unavailable">Camera unavailable</string>
     <string name="camera_retry">Retrying…</string>
     <string name="share_label">Slice in Filum</string>
+    <string name="print_section">Print</string>
+    <string name="chamber">Chamber</string>
+    <string name="action_print">Print</string>
+    <string name="status_paused">Paused</string>
 </resources>

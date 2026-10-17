@@ -61,6 +61,8 @@ fun DashboardScreen(
     fault: ActiveFault? = null,
     /** Поддержка WebRTC по данным служб Creality — для режима камеры «Авто». */
     webrtc: Boolean? = null,
+    /** Службы Creality сообщили, что камеры нет (K1 SE, Ender-3 V3): в режиме «Авто» блок не показываем. */
+    noCamera: Boolean = false,
 ) {
     val camMode = settings.effectiveCameraMode(webrtc)
     val camUrl = settings.resolvedCameraUrl(webrtc)
@@ -75,7 +77,9 @@ fun DashboardScreen(
     ) {
         if (fault != null && fault.since != dismissed) FaultCard(fault) { dismissed = fault.since }
 
-        if (settings.cameraMode != CameraMode.OFF && settings.host.isNotBlank()) {
+        val showCamera = settings.cameraMode != CameraMode.OFF && settings.host.isNotBlank() &&
+            !(settings.cameraMode == CameraMode.AUTO && noCamera)
+        if (showCamera) {
             Box(
                 Modifier.fillMaxWidth().aspectRatio(16f / 9f).clip(RoundedCornerShape(12.dp)).background(Color.Black)
             ) {
@@ -90,7 +94,7 @@ fun DashboardScreen(
             }
         }
 
-        Section(tr(R.string.status_printing)) {
+        Section(tr(R.string.print_section)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Text(
                     state.statusText,
@@ -126,17 +130,20 @@ fun DashboardScreen(
                     onClick = { client.pause() },
                     enabled = connected && state.isPrinting,
                     modifier = Modifier.weight(1f),
+                    contentPadding = BtnPadding,
                 ) { ActionLabel(Icons.Default.Pause, tr(R.string.pause)) }
                 FilledTonalButton(
                     onClick = { client.resume() },
                     enabled = connected && state.isPaused,
                     modifier = Modifier.weight(1f),
+                    contentPadding = BtnPadding,
                 ) { ActionLabel(Icons.Default.PlayArrow, tr(R.string.resume_short)) }
                 Button(
                     onClick = { confirmStop = true },
                     enabled = connected && state.hasActiveJob,
                     colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error),
                     modifier = Modifier.weight(1f),
+                    contentPadding = BtnPadding,
                 ) { ActionLabel(Icons.Default.Stop, tr(R.string.stop)) }
             }
         }
@@ -145,7 +152,7 @@ fun DashboardScreen(
             Row {
                 InfoCell(tr(R.string.nozzle), "${fmtTemp(state.nozzleTemp)} / ${fmtTemp(state.nozzleTarget)}", Modifier.weight(1f))
                 InfoCell(tr(R.string.bed), "${fmtTemp(state.bedTemp)} / ${fmtTemp(state.bedTarget)}", Modifier.weight(1f))
-                if (state.caps.chamberTemp) InfoCell(tr(R.string.camera), fmtTemp(state.chamberTemp), Modifier.weight(1f))
+                if (state.caps.chamberTemp) InfoCell(tr(R.string.chamber), fmtTemp(state.chamberTemp), Modifier.weight(1f))
             }
         }
 
@@ -184,6 +191,9 @@ fun DashboardScreen(
         )
     }
 }
+
+/** Узкие отступы: три кнопки в ряд, подписи на английском длиннее. */
+private val BtnPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 8.dp, vertical = 8.dp)
 
 @Composable
 private fun ActionLabel(icon: androidx.compose.ui.graphics.vector.ImageVector, text: String) {

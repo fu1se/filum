@@ -87,10 +87,38 @@ def gcode_summary(path: Path) -> dict:
     }
 
 
-def _normalize_3mf(src: Path, dst: Path, n: int, colors: list):
+def _project_from_presets(machine: Path, process: Path, filaments: list) -> dict:
+    """Настройки проекта из выбранных пресетов (как их сохраняет Orca GUI).
+    Пластиковые ключи-массивы собираются по слотам; одиночные значения остаются как есть."""
+    skip = {"inherits", "from", "name", "compatible_printers", "compatible_prints", "instantiation",
+            "setting_id", "compatible_printers_condition", "compatible_prints_condition", "type", "_comment",
+            "version", "is_custom_defined"}
+    ps = {}
+    for f in (machine, process):
+        ps.update(json.loads(Path(f).read_text(encoding="utf-8")))
+    fils = [json.loads(Path(f).read_text(encoding="utf-8")) for f in filaments]
+    for k in fils[0]:
+        vals = [fi.get(k, fils[0][k]) for fi in fils]
+        if all(isinstance(v, list) and v for v in vals):
+            ps[k] = [v[0] for v in vals]
+        else:
+            ps[k] = vals[0]
+    for k in skip:
+        ps.pop(k, None)
+    return ps
+
+
+def _normalize_3mf(src: Path, dst: Path, n: int, colors: list, presets: tuple | None = None):
     """Копия 3MF с согласованными массивами пластиков (на рассогласованных Orca падает
-    с segfault) и цветами выбранных катушек CFS."""
+    с segfault) и цветами выбранных катушек CFS.
+
+    3MF «только модель» (экспорт из CAD, Printables…) без Metadata/project_settings.config
+    CLI OrcaSlicer 2.3–2.4 роняет с segfault даже с --load-settings — такому файлу
+    дописываем настройки проекта из выбранных пресетов [presets] = (machine, process, [filaments])."""
     with zipfile.ZipFile(src) as zin, zipfile.ZipFile(dst, "w", zipfile.ZIP_DEFLATED) as zout:
+        if presets and "Metadata/project_settings.config" not in zin.namelist():
+            ps = _fix_project(_project_from_presets(*presets), n, colors)
+            zout.writestr("Metadata/project_settings.config", json.dumps(ps, ensure_ascii=False, indent=1))
         for item in zin.infolist():
             data = zin.read(item.filename)
             if item.filename == "Metadata/project_settings.config":
@@ -372,7 +400,8 @@ class Slicer:
         src = jd / ("model" + model_path.suffix.lower())
         if not src.exists():
             if model_path.suffix.lower() == ".3mf":
-                _normalize_3mf(model_path, src, len(fils), j.get("cfs_colors") or [])
+                _normalize_3mf(model_path, src, len(fils), j.get("cfs_colors") or [],
+                               (jd / "machine.json", jd / "process.json", fil_files))
             else:
                 try:
                     os.link(model_path, src)

@@ -243,7 +243,7 @@ fun PreviewPanel(vm: SlicerViewModel, target: PreviewTarget, printerConnected: B
                 TextButton(onClick = {
                     confirmPrint = false
                     vm.sendToPrinter(target.job.id, target.result.plate, start = true) { onClose() }
-                }) { Text(tr(R.string.status_printing)) }
+                }) { Text(tr(R.string.action_print)) }
             },
             dismissButton = { TextButton(onClick = { confirmPrint = false }) { Text(tr(R.string.cancel)) } },
         )

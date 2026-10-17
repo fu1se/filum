@@ -36,6 +36,8 @@ data class Presets(
     val syncOk: Boolean,
     val syncCount: Int,
     val syncError: String?,
+    /** orca-sync настроен на сервере (без него — только системные профили, это не ошибка). */
+    val syncConfigured: Boolean = true,
     val bedW: Float,
     val bedH: Float,
 )
@@ -198,6 +200,7 @@ class SlicerApi(private val baseUrl: () -> String) {
             printer = o.optStringOrNull("printer"), defProcess = d.optStringOrNull("process"),
             defFilament = d.optStringOrNull("filament"),
             syncOk = s.optBoolean("ok"), syncCount = s.optInt("count"), syncError = s.optStringOrNull("error"),
+            syncConfigured = s.optBoolean("configured", true),
             bedW = bed?.optDouble(0)?.toFloat() ?: 350f, bedH = bed?.optDouble(1)?.toFloat() ?: 350f,
         )
     }

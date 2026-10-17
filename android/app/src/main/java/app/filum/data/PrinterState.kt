@@ -52,7 +52,7 @@ data class PrinterState(
             else -> when (printState) {
                 "standby", null -> tr(R.string.status_ready)
                 "printing" -> tr(R.string.status_printing)
-                "paused" -> tr(R.string.pause)
+                "paused" -> tr(R.string.status_paused)
                 "complete" -> tr(R.string.status_complete)
                 "cancelled" -> tr(R.string.status_cancelled)
                 "error" -> tr(R.string.status_error)

@@ -188,7 +188,8 @@ fun SlicerScreen(vm: SlicerViewModel, printerConnected: Boolean) {
         // ---------- настройки ----------
         ui.presets?.let { p ->
             Section(tr(R.string.settings)) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
+                // orca-sync необязателен: без него строки нет вовсе
+                if (p.syncConfigured) Row(verticalAlignment = Alignment.CenterVertically) {
                     Text(
                         if (p.syncOk) tr(R.string.orca_sync_presets, p.syncCount) else tr(R.string.orca_sync_status, p.syncError ?: tr(R.string.error_lower)),
                         Modifier.weight(1f),

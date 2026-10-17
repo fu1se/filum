@@ -28,7 +28,11 @@ data class PrinterCaps(
     val lightPin: String? get() = if (!known) "LED" else LIGHT_PINS.firstOrNull { "output_pin $it" in objects }
 
     val cfs get() = has("box")
-    val nozzleDiameter get() = !known || "SET_NOZZLE_DIAMETER" in commands
+    /**
+     * SET_NOZZLE_DIAMETER зарегистрирована без описания, поэтому в printer.gcode.help её нет.
+     * Признак — CXSAVE_CONFIG из того же Klipper Creality: им SET_NOZZLE_DIAMETER и сохраняет диаметр.
+     */
+    val nozzleDiameter get() = !known || "SET_NOZZLE_DIAMETER" in commands || "CXSAVE_CONFIG" in commands
 
     /** На что подписываться: только существующие объекты. */
     fun subscribeList(): List<String> = if (!known) ALL else ALL.filter { it in objects }

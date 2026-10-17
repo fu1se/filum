@@ -50,7 +50,7 @@ class State:
         self.index = PresetIndex(ORCA_DIR / "resources" / "profiles")
         self.sync = OrcaSync(os.environ.get("ORCA_SYNC_URL", ""), os.environ.get("ORCA_SYNC_USER", ""),
                              os.environ.get("ORCA_SYNC_PASSWORD", ""), DATA / "orcasync.json")
-        self.sync_status = {"ok": None, "error": None, "count": 0, "at": None}
+        self.sync_status = {"ok": None, "configured": True, "error": None, "count": 0, "at": None}
         self.sync_lock = threading.Lock()
         self.mw = MakerWorld(DATA / "makerworld.json")
         self.slicer = Slicer(DATA, ORCA_DIR / "AppRun", lambda: self.index, MOONRAKER)
@@ -59,16 +59,16 @@ class State:
 
     def refresh_sync(self):
         if not self.sync.configured:
-            self.sync_status = {"ok": False, "error": "orca-sync is not configured", "count": 0, "at": time.time()}
+            self.sync_status = {"ok": False, "configured": False, "error": "orca-sync is not configured", "count": 0, "at": time.time()}
             return
         with self.sync_lock:
             try:
                 profiles = self.sync.pull()
                 self.index.set_user_presets(profiles)
-                self.sync_status = {"ok": True, "error": None, "count": len(profiles), "at": time.time()}
+                self.sync_status = {"ok": True, "configured": True, "error": None, "count": len(profiles), "at": time.time()}
             except Exception as e:
                 # Старые пользовательские пресеты остаются в индексе
-                self.sync_status = {"ok": False, "error": str(e), "count": self.sync_status["count"], "at": time.time()}
+                self.sync_status = {"ok": False, "configured": True, "error": str(e), "count": self.sync_status["count"], "at": time.time()}
 
     def _sync_loop(self):
         while True:

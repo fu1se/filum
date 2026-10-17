@@ -22,6 +22,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import app.filum.data.ActiveFault
+import app.filum.data.Faults
 import app.filum.data.PrinterState
 
 /**
@@ -42,7 +43,9 @@ fun pickFault(screen: ActiveFault?, gcode: ActiveFault?, state: PrinterState): A
 
 @Composable
 fun FaultCard(f: ActiveFault, onDismiss: () -> Unit) {
-    val fault = f.fault
+    // текст — заново по коду: язык мог смениться после того, как ошибка пришла
+    val fault = f.fault.takeIf { it.code > 0 }
+        ?.let { Faults.describe(it.code)?.copy(detail = it.detail) } ?: f.fault
     Card(
         Modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(

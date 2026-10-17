@@ -19,13 +19,16 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 
-enum class CameraMode(val title: String) {
-    AUTO(tr(R.string.camera_auto)),
-    GO2RTC(tr(R.string.camera_go2rtc)),
-    WEBRTC(tr(R.string.camera_webrtc)),
-    MJPEG(tr(R.string.camera_mjpeg)),
-    PAGE(tr(R.string.camera_page)),
-    OFF(tr(R.string.camera_off)),
+enum class CameraMode(@androidx.annotation.StringRes private val titleRes: Int) {
+    AUTO(R.string.camera_auto),
+    GO2RTC(R.string.camera_go2rtc),
+    WEBRTC(R.string.camera_webrtc),
+    MJPEG(R.string.camera_mjpeg),
+    PAGE(R.string.camera_page),
+    OFF(R.string.camera_off);
+
+    /** Текст — при обращении, а не при создании enum: язык может смениться на ходу. */
+    val title get() = tr(titleRes)
 }
 
 /** Сохранённый принтер (их может быть несколько; активный — один). */

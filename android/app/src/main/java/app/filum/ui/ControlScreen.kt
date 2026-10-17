@@ -94,7 +94,7 @@ fun ControlScreen(state: PrinterState, connected: Boolean, client: PrinterClient
             HeaterRow(tr(R.string.nozzle), state.nozzleTemp, state.nozzleTarget, 350, connected) { client.setNozzleTemp(it) }
             HeaterRow(tr(R.string.bed), state.bedTemp, state.bedTarget, 120, connected) { client.setBedTemp(it) }
             if (caps.chamberHeater) {
-                HeaterRow(tr(R.string.camera), state.chamberTemp, state.chamberTarget, 60, connected) { client.setChamberTemp(it) }
+                HeaterRow(tr(R.string.chamber), state.chamberTemp, state.chamberTarget, 60, connected) { client.setChamberTemp(it) }
             }
         }
 

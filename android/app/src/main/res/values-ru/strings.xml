@@ -305,7 +305,7 @@
     <string name="extrude">Выдавить</string>
     <string name="retract">Втянуть</string>
     <string name="nozzle_mm" formatted="false">Сопло %.1f мм</string>
-    <string name="nozzle_confirm_1">Принтер запомнит новый диаметр (SET_NOZZLE_DIAMETER). Экран принтера будет предупреждать </string>
+    <string name="nozzle_confirm_1">Принтер запомнит новый диаметр (SET_NOZZLE_DIAMETER). Экран принтера будет предупреждать\u0020</string>
     <string name="nozzle_confirm_2" formatted="false">о файлах, нарезанных под другое сопло, а слайсер приложения выберет пресет принтера для %.1f мм.</string>
     <string name="apply">Задать</string>
     <string name="elapsed">Прошло</string>
@@ -325,7 +325,7 @@
     <string name="hide">Скрыть</string>
     <string name="files_count">Файлов: %1$s</string>
     <string name="files_no_list">Список не получен</string>
-    <string name="refresh_spaced"> Обновить</string>
+    <string name="refresh_spaced">\u0020Обновить</string>
     <string name="files_hint_1">Нажмите «Обновить», чтобы запросить список файлов с принтера.\n</string>
     <string name="files_hint_2">Если список не приходит, проверьте ответ принтера во вкладке «Консоль».</string>
     <string name="files_empty">На принтере нет G-code файлов.</string>
@@ -383,7 +383,7 @@
     <string name="n_plates">%1$s стола</string>
     <string name="all">Все</string>
     <string name="plate_n">Стол %1$s</string>
-    <string name="slicer_empty_1">Выберите STL / 3MF / STEP на телефоне, модель с MakerWorld или из недавних. </string>
+    <string name="slicer_empty_1">Выберите STL / 3MF / STEP на телефоне, модель с MakerWorld или из недавних.\u0020</string>
     <string name="slicer_empty_2">Файлы можно отправлять сюда и через «Поделиться».</string>
     <string name="recent">Недавние</string>
     <string name="orca_sync_presets">Пресеты orca-sync: %1$s</string>
@@ -454,4 +454,8 @@
     <string name="camera_unavailable">Камера недоступна</string>
     <string name="camera_retry">Повтор…</string>
     <string name="share_label">Нарезать в Filum</string>
+    <string name="print_section">Печать</string>
+    <string name="chamber">Камера</string>
+    <string name="action_print">Печать</string>
+    <string name="status_paused">Пауза</string>
 </resources>

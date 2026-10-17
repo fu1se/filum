@@ -64,14 +64,17 @@ import androidx.compose.material.icons.filled.ViewInAr
 import androidx.compose.runtime.LaunchedEffect
 import app.filum.data.ConnState
 
-private data class Tab(val title: String, val icon: androidx.compose.ui.graphics.vector.ImageVector)
+/** Подпись — id строки: текст берётся при отрисовке, чтобы смена языка подхватывалась сразу. */
+private data class Tab(@androidx.annotation.StringRes val titleRes: Int, val icon: androidx.compose.ui.graphics.vector.ImageVector) {
+    val title get() = tr(titleRes)
+}
 
 private val tabs = listOf(
-    Tab(tr(R.string.tab_home), Icons.Default.Dashboard),
-    Tab(tr(R.string.tab_control), Icons.Default.Tune),
-    Tab(tr(R.string.tab_slicer), Icons.Default.ViewInAr),
-    Tab(tr(R.string.tab_files), Icons.AutoMirrored.Filled.List),
-    Tab(tr(R.string.tab_timelapses), Icons.Default.VideoLibrary),
+    Tab(R.string.tab_home, Icons.Default.Dashboard),
+    Tab(R.string.tab_control, Icons.Default.Tune),
+    Tab(R.string.tab_slicer, Icons.Default.ViewInAr),
+    Tab(R.string.tab_files, Icons.AutoMirrored.Filled.List),
+    Tab(R.string.tab_timelapses, Icons.Default.VideoLibrary),
 )
 
 /** Консоль открывается иконкой в верхней панели — шесть вкладок внизу не помещаются. */
@@ -185,7 +188,8 @@ fun App(vm: PrinterViewModel, slicerVm: SlicerViewModel) {
                 0 -> {
                     val screenFault by vm.creality.fault.collectAsStateWithLifecycle()
                     val gcodeFault by vm.client.fault.collectAsStateWithLifecycle()
-                    DashboardScreen(state, connected, settings, vm.client, pickFault(screenFault, gcodeFault, state), crealityInfo?.webrtc)
+                    DashboardScreen(state, connected, settings, vm.client, pickFault(screenFault, gcodeFault, state),
+                        crealityInfo?.webrtc, noCamera = crealityInfo?.camera == false)
                 }
                 1 -> ControlScreen(state, connected, vm.client, slicerVm)
                 2 -> SlicerScreen(slicerVm, connected)
