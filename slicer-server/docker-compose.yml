@@ -1,0 +1,33 @@
+# Filum Slicer — OrcaSlicer CLI as a LAN service for the Filum app (and a small web UI).
+#   docker compose up -d --build        build locally (downloads OrcaSlicer, ~5 min)
+# or use the prebuilt image: comment out `build:` and run `docker compose up -d`.
+# All settings are optional; see README.md → Configuration.
+
+services:
+  filum-slicer:
+    build: .
+    image: ghcr.io/OWNER/filum-slicer:latest
+    container_name: filum-slicer
+    restart: unless-stopped
+    ports:
+      - "8090:8090"
+    environment:
+      # Which printer profiles to offer (substring of the OrcaSlicer machine profile name)
+      PRINTER_FILTER: "Creality"
+      # Optional: your own presets from an orca-sync server (https://github.com/…/orca-sync)
+      ORCA_SYNC_URL: ""
+      ORCA_SYNC_USER: ""
+      ORCA_SYNC_PASSWORD: ""
+      # Optional: fallback printer when a request does not name one (the app always does)
+      MOONRAKER_URL: ""
+      # Optional defaults for the web UI
+      DEFAULT_PRINTER: ""
+      DEFAULT_PROCESS: ""
+      DEFAULT_FILAMENT: ""
+      TZ: "UTC"
+    volumes:
+      # models, G-code, preview caches, orca-sync and MakerWorld tokens
+      - filum-slicer-data:/data
+
+volumes:
+  filum-slicer-data:

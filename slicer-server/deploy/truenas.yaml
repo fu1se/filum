@@ -1,0 +1,18 @@
+# TrueNAS SCALE: Apps → Discover Apps → ⋮ → Install via YAML, name "filum-slicer".
+# Uses the prebuilt image; nothing has to be copied to the NAS.
+services:
+  filum-slicer:
+    image: ghcr.io/OWNER/filum-slicer:latest
+    restart: unless-stopped
+    ports:
+      - "8090:8090"
+    environment:
+      PRINTER_FILTER: "Creality"
+      ORCA_SYNC_URL: ""
+      ORCA_SYNC_USER: ""
+      ORCA_SYNC_PASSWORD: ""
+      TZ: "UTC"
+    volumes:
+      - filum-slicer-data:/data
+volumes:
+  filum-slicer-data:

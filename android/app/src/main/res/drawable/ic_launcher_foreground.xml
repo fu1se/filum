@@ -1,0 +1,14 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp" android:height="108dp"
+    android:viewportWidth="108" android:viewportHeight="108">
+    <!-- Рама принтера -->
+    <path android:fillColor="#00000000" android:strokeColor="#FFFFFFFF" android:strokeWidth="4"
+        android:pathData="M32,30 h44 v48 h-44 z" />
+    <!-- Портал -->
+    <path android:fillColor="#FFFFFFFF" android:pathData="M32,42 h44 v4 h-44 z" />
+    <!-- Хотэнд -->
+    <path android:fillColor="#FFFF8A3D" android:pathData="M48,46 h12 v8 l-4,5 h-4 l-4,-5 z" />
+    <!-- Модель на столе -->
+    <path android:fillColor="#FFFF8A3D" android:pathData="M46,64 h16 v8 h-16 z" />
+    <path android:fillColor="#FFFFFFFF" android:pathData="M36,72 h36 v3 h-36 z" />
+</vector>

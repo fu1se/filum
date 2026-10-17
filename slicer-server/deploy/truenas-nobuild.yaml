@@ -1,0 +1,30 @@
+# TrueNAS SCALE without a registry image: a stock ubuntu:24.04 container runs the code from a dataset.
+# 1. Copy slicer-server/app to a dataset, e.g. /mnt/tank/apps/filum-slicer/app
+# 2. Apps → Discover Apps → ⋮ → Install via YAML, name "filum-slicer", paste this file
+#    (fix the host path below — it must be absolute).
+# First start installs packages and downloads OrcaSlicer: 2–5 minutes.
+services:
+  filum-slicer:
+    image: ubuntu:24.04
+    restart: unless-stopped
+    ports:
+      - "8090:8090"
+    environment:
+      ORCA_VERSION: "2.4.2"
+      PRINTER_FILTER: "Creality"
+      ORCA_SYNC_URL: ""
+      ORCA_SYNC_USER: ""
+      ORCA_SYNC_PASSWORD: ""
+      TZ: "UTC"
+    volumes:
+      - /mnt/tank/apps/filum-slicer/app:/app:ro
+      - filum-slicer-data:/data
+    command: ["bash", "/app/start.sh"]
+    healthcheck:
+      test: ["CMD", "python3", "-c", "import urllib.request;urllib.request.urlopen('http://127.0.0.1:8090/health',timeout=4)"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 900s
+volumes:
+  filum-slicer-data:

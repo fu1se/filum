@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Принтер в локальной сети работает только по HTTP/WS без TLS -->
+<network-security-config>
+    <base-config cleartextTrafficPermitted="true" />
+</network-security-config>

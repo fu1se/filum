@@ -1,0 +1,709 @@
+{
+"00001": {
+"brand": "Generic",
+"name": "Generic PLA",
+"type": "PLA",
+"min": 190,
+"max": 240
+},
+"00002": {
+"brand": "Generic",
+"name": "Generic PLA-Silk",
+"type": "PLA",
+"min": 190,
+"max": 240
+},
+"00003": {
+"brand": "Generic",
+"name": "Generic PETG",
+"type": "PETG",
+"min": 220,
+"max": 270
+},
+"00004": {
+"brand": "Generic",
+"name": "Generic ABS",
+"type": "ABS",
+"min": 240,
+"max": 280
+},
+"00005": {
+"brand": "Generic",
+"name": "Generic TPU",
+"type": "TPU",
+"min": 210,
+"max": 240
+},
+"00006": {
+"brand": "Generic",
+"name": "Generic PLA-CF",
+"type": "PLA-CF",
+"min": 190,
+"max": 240
+},
+"00007": {
+"brand": "Generic",
+"name": "Generic ASA",
+"type": "ASA",
+"min": 240,
+"max": 280
+},
+"00008": {
+"brand": "Generic",
+"name": "Generic PA",
+"type": "PA",
+"min": 240,
+"max": 260
+},
+"00009": {
+"brand": "Generic",
+"name": "Generic PA-CF",
+"type": "PA-CF",
+"min": 260,
+"max": 300
+},
+"00010": {
+"brand": "Generic",
+"name": "Generic BVOH",
+"type": "BVOH",
+"min": 200,
+"max": 220
+},
+"00011": {
+"brand": "Generic",
+"name": "Generic PVA",
+"type": "PVA",
+"min": 215,
+"max": 225
+},
+"00012": {
+"brand": "Generic",
+"name": "Generic HIPS",
+"type": "HIPS",
+"min": 220,
+"max": 250
+},
+"00013": {
+"brand": "Generic",
+"name": "Generic PET-CF",
+"type": "PET-CF",
+"min": 280,
+"max": 320
+},
+"00014": {
+"brand": "Generic",
+"name": "Generic PETG-CF",
+"type": "PETG-CF",
+"min": 240,
+"max": 260
+},
+"00015": {
+"brand": "Generic",
+"name": "Generic PA6-CF",
+"type": "PA-CF",
+"min": 280,
+"max": 300
+},
+"00016": {
+"brand": "Generic",
+"name": "Generic PAHT-CF",
+"type": "PA-CF",
+"min": 300,
+"max": 320
+},
+"00017": {
+"brand": "Generic",
+"name": "Generic PPS",
+"type": "PPS",
+"min": 320,
+"max": 350
+},
+"00018": {
+"brand": "Generic",
+"name": "Generic PPS-CF",
+"type": "PPS-CF",
+"min": 300,
+"max": 350
+},
+"00019": {
+"brand": "Generic",
+"name": "Generic PP",
+"type": "PP",
+"min": 220,
+"max": 260
+},
+"00020": {
+"brand": "Generic",
+"name": "Generic PET",
+"type": "PET",
+"min": 250,
+"max": 270
+},
+"00021": {
+"brand": "Generic",
+"name": "Generic PC",
+"type": "PC",
+"min": 250,
+"max": 270
+},
+"00022": {
+"brand": "Generic",
+"name": "Generic PA612-CF",
+"type": "PA-CF",
+"min": 270,
+"max": 310
+},
+"00023": {
+"brand": "Generic",
+"name": "Generic Support for PA",
+"type": "PA",
+"min": 260,
+"max": 300
+},
+"00024": {
+"brand": "Generic",
+"name": "Generic Support for PLA",
+"type": "PLA",
+"min": 190,
+"max": 240
+},
+"00025": {
+"brand": "Generic",
+"name": "Generic PA12-CF",
+"type": "PA-CF",
+"min": 270,
+"max": 310
+},
+"00026": {
+"brand": "Generic",
+"name": "Generic TPU 64D",
+"type": "TPU",
+"min": 210,
+"max": 240
+},
+"00027": {
+"brand": "Generic",
+"name": "Generic PETG-GF",
+"type": "PETG-GF",
+"min": 240,
+"max": 280
+},
+"00031": {
+"brand": "Generic",
+"name": "Generic PP-CF",
+"type": "PP-CF",
+"min": 220,
+"max": 270
+},
+"00032": {
+"brand": "Generic",
+"name": "Generic PCTG",
+"type": "PCTG",
+"min": 250,
+"max": 270
+},
+"00033": {
+"brand": "Generic",
+"name": "Generic ASA-CF",
+"type": "ASA-CF",
+"min": 250,
+"max": 280
+},
+"00034": {
+"brand": "Generic",
+"name": "Generic PA6-GF",
+"type": "PA-GF",
+"min": 250,
+"max": 290
+},
+"00035": {
+"brand": "Generic",
+"name": "Generic PLA-LW",
+"type": "PLA",
+"min": 190,
+"max": 270
+},
+"00040": {
+"brand": "Generic",
+"name": "Generic PLA-HT-GF",
+"type": "PLA-GF",
+"min": 0,
+"max": 0
+},
+"00041": {
+"brand": "Generic",
+"name": "Generic ABS-GF",
+"type": "ABS-GF",
+"min": 240,
+"max": 270
+},
+"00043": {
+"brand": "Generic",
+"name": "Generic PET-GF15",
+"type": "PETG-GF",
+"min": 0,
+"max": 0
+},
+"00044": {
+"brand": "Generic",
+"name": "Generic PC-CF",
+"type": "PC-CF",
+"min": 0,
+"max": 0
+},
+"00045": {
+"brand": "Generic",
+"name": "Generic ABS-FR",
+"type": "ABS-FR",
+"min": 0,
+"max": 0
+},
+"01001": {
+"brand": "Creality",
+"name": "Hyper PLA",
+"type": "PLA",
+"min": 190,
+"max": 240
+},
+"01002": {
+"brand": "Creality",
+"name": "Hyper L-W PLA",
+"type": "PLA",
+"min": 200,
+"max": 270
+},
+"01003": {
+"brand": "Creality",
+"name": "Hyper Luminous",
+"type": "PLA",
+"min": 190,
+"max": 230
+},
+"01004": {
+"brand": "Creality",
+"name": "Hyper Stardust",
+"type": "PLA",
+"min": 190,
+"max": 240
+},
+"01601": {
+"brand": "Creality",
+"name": "Soleyin Ultra PLA",
+"type": "PLA",
+"min": 190,
+"max": 240
+},
+"02001": {
+"brand": "Creality",
+"name": "Hyper PLA-CF",
+"type": "PLA-CF",
+"min": 190,
+"max": 240
+},
+"03001": {
+"brand": "Creality",
+"name": "Hyper ABS",
+"type": "ABS",
+"min": 240,
+"max": 280
+},
+"04001": {
+"brand": "Creality",
+"name": "CR-PLA",
+"type": "PLA",
+"min": 190,
+"max": 240
+},
+"05001": {
+"brand": "Creality",
+"name": "CR-Silk",
+"type": "PLA",
+"min": 190,
+"max": 240
+},
+"06001": {
+"brand": "Creality",
+"name": "CR-PETG",
+"type": "PETG",
+"min": 220,
+"max": 270
+},
+"06002": {
+"brand": "Creality",
+"name": "Hyper PETG",
+"type": "PETG",
+"min": 220,
+"max": 270
+},
+"06003": {
+"brand": "Creality",
+"name": "Hyper PETG-CF",
+"type": "PETG-CF",
+"min": 240,
+"max": 260
+},
+"06004": {
+"brand": "Creality",
+"name": "Hyper PETG-GF",
+"type": "PETG-GF",
+"min": 240,
+"max": 260
+},
+"06005": {
+"brand": "Creality",
+"name": "Soleyin Basic PETG",
+"type": "PETG",
+"min": 230,
+"max": 250
+},
+"07001": {
+"brand": "Creality",
+"name": "CR-ABS",
+"type": "ABS",
+"min": 240,
+"max": 280
+},
+"07002": {
+"brand": "Creality",
+"name": "Hyper PC",
+"type": "PC",
+"min": 250,
+"max": 270
+},
+"08001": {
+"brand": "Creality",
+"name": "Ender-PLA",
+"type": "PLA",
+"min": 190,
+"max": 240
+},
+"09001": {
+"brand": "Creality",
+"name": "EN-PLA+",
+"type": "PLA",
+"min": 190,
+"max": 240
+},
+"09002": {
+"brand": "Creality",
+"name": "ENDER FAST PLA",
+"type": "PLA",
+"min": 190,
+"max": 240
+},
+"10001": {
+"brand": "Creality",
+"name": "HP-TPU",
+"type": "TPU",
+"min": 190,
+"max": 240
+},
+"11001": {
+"brand": "Creality",
+"name": "CR-Nylon",
+"type": "PA",
+"min": 250,
+"max": 270
+},
+"12002": {
+"brand": "Creality",
+"name": "Hyper PPA-CF",
+"type": "PA-CF",
+"min": 280,
+"max": 320
+},
+"12003": {
+"brand": "Creality",
+"name": "Hyper PAHT-CF",
+"type": "PA-CF",
+"min": 280,
+"max": 320
+},
+"12004": {
+"brand": "Creality",
+"name": "Hyper PA612-CF",
+"type": "PA-CF",
+"min": 290,
+"max": 320
+},
+"12005": {
+"brand": "Creality",
+"name": "Hyper PA6-CF",
+"type": "PA-CF",
+"min": 290,
+"max": 320
+},
+"13001": {
+"brand": "Creality",
+"name": "CR-PLA Carbon",
+"type": "PLA-CF",
+"min": 190,
+"max": 240
+},
+"14001": {
+"brand": "Creality",
+"name": "CR-PLA Matte",
+"type": "PLA",
+"min": 190,
+"max": 240
+},
+"15001": {
+"brand": "Creality",
+"name": "CR-PLA Fluo",
+"type": "PLA",
+"min": 190,
+"max": 240
+},
+"16001": {
+"brand": "Creality",
+"name": "CR-TPU",
+"type": "TPU",
+"min": 210,
+"max": 240
+},
+"17001": {
+"brand": "Creality",
+"name": "CR-Wood",
+"type": "PLA",
+"min": 190,
+"max": 240
+},
+"18001": {
+"brand": "Creality",
+"name": "HP Ultra PLA",
+"type": "PLA",
+"min": 190,
+"max": 240
+},
+"19001": {
+"brand": "Creality",
+"name": "HP-ASA",
+"type": "ASA",
+"min": 240,
+"max": 280
+},
+"29001": {
+"brand": "Creality",
+"name": "Hyper Marble",
+"type": "PLA",
+"min": 190,
+"max": 240
+},
+"E1001": {
+"brand": "eSUN",
+"name": "eSUN PLA+",
+"type": "PLA",
+"min": 210,
+"max": 230
+},
+"E1002": {
+"brand": "eSUN",
+"name": "eSUN PLA-Silk",
+"type": "PLA",
+"min": 210,
+"max": 230
+},
+"E1003": {
+"brand": "eSUN",
+"name": "eSUN PLA-Matte",
+"type": "PLA",
+"min": 210,
+"max": 230
+},
+"E1004": {
+"brand": "eSUN",
+"name": "eSUN PLA-Lite",
+"type": "PLA",
+"min": 210,
+"max": 230
+},
+"E1005": {
+"brand": "eSUN",
+"name": "eSUN PLA-CF",
+"type": "PLA-CF",
+"min": 220,
+"max": 250
+},
+"E1006": {
+"brand": "eSUN",
+"name": "eSUN PLA-HS",
+"type": "PLA",
+"min": 210,
+"max": 230
+},
+"E1008": {
+"brand": "eSUN",
+"name": "eSUN PLA-LW",
+"type": "PLA",
+"min": 190,
+"max": 270
+},
+"E1009": {
+"brand": "eSUN",
+"name": "eSUN PLA-Basic",
+"type": "PLA",
+"min": 210,
+"max": 230
+},
+"E2001": {
+"brand": "eSUN",
+"name": "eSUN PETG",
+"type": "PETG",
+"min": 230,
+"max": 260
+},
+"E2002": {
+"brand": "eSUN",
+"name": "eSUN PETG+HS",
+"type": "PETG",
+"min": 220,
+"max": 260
+},
+"E2003": {
+"brand": "eSUN",
+"name": "eSUN PETG-Basic",
+"type": "PETG",
+"min": 240,
+"max": 260
+},
+"E2004": {
+"brand": "eSUN",
+"name": "eSUN PETG-CF",
+"type": "PETG",
+"min": 240,
+"max": 260
+},
+"E3001": {
+"brand": "eSUN",
+"name": "eSUN ABS+",
+"type": "ABS",
+"min": 230,
+"max": 270
+},
+"E3002": {
+"brand": "eSUN",
+"name": "eSUN ABS-CF",
+"type": "ABS",
+"min": 240,
+"max": 270
+},
+"E3003": {
+"brand": "eSUN",
+"name": "eSUN ABS+HS",
+"type": "ABS",
+"min": 230,
+"max": 270
+},
+"E4001": {
+"brand": "eSUN",
+"name": "eSUN ASA+",
+"type": "ASA",
+"min": 250,
+"max": 280
+},
+"E5001": {
+"brand": "eSUN",
+"name": "eSUN TPU-95A",
+"type": "TPU",
+"min": 220,
+"max": 250
+},
+"E8001": {
+"brand": "eSUN",
+"name": "eSUN PET-Basic",
+"type": "PET",
+"min": 250,
+"max": 280
+},
+"P1001": {
+"brand": "Polymaker",
+"name": "Panchroma PLA Satin",
+"type": "PLA",
+"min": 190,
+"max": 230
+},
+"P1002": {
+"brand": "Polymaker",
+"name": "PolySonic PLA Pro",
+"type": "PLA",
+"min": 190,
+"max": 230
+},
+"P1003": {
+"brand": "Polymaker",
+"name": "Panchroma PLA Matte",
+"type": "PLA",
+"min": 190,
+"max": 230
+},
+"P1004": {
+"brand": "Polymaker",
+"name": "PolySonic PLA",
+"type": "PLA",
+"min": 190,
+"max": 230
+},
+"P2001": {
+"brand": "Polymaker",
+"name": "Fiberon PETG-ESD",
+"type": "PETG",
+"min": 250,
+"max": 290
+},
+"P2002": {
+"brand": "Polymaker",
+"name": "Fiberon PETG-rCF08",
+"type": "PETG",
+"min": 240,
+"max": 270
+},
+"P7001": {
+"brand": "Polymaker",
+"name": "Fiberon PA6-GF25",
+"type": "PA",
+"min": 280,
+"max": 300
+},
+"P7002": {
+"brand": "Polymaker",
+"name": "Fiberon PA612-CF15",
+"type": "PA",
+"min": 250,
+"max": 300
+},
+"P7003": {
+"brand": "Polymaker",
+"name": "Fiberon PA6-CF20",
+"type": "PA",
+"min": 280,
+"max": 300
+},
+"P7004": {
+"brand": "Polymaker",
+"name": "Fiberon PA12-CF10",
+"type": "PA",
+"min": 260,
+"max": 300
+},
+"P7005": {
+"brand": "Polymaker",
+"name": "Fiberon PA612-ESD",
+"type": "PA",
+"min": 260,
+"max": 300
+},
+"P8001": {
+"brand": "Polymaker",
+"name": "Fiberon PET-CF17",
+"type": "PET",
+"min": 270,
+"max": 300
+},
+"P9001": {
+"brand": "Polymaker",
+"name": "Fiberon PPS-CF10",
+"type": "PPS",
+"min": 310,
+"max": 350
+}
+}

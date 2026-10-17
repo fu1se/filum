@@ -1,0 +1,150 @@
+Откройте крышку бокса и проверьте путь прутка от катушки до соединителя и трубку до головы.	fault_cfs_check_path	Open the box lid and check the filament path from the spool to the connector and the tube to the head.
+ИИ-камера: «спагетти»	fault_101_title	AI camera: “spaghetti”
+Камера с ИИ решила, что модель оторвалась или печать превратилась в путаницу нитей, и поставила паузу.	fault_101_what	The AI camera decided the model came loose or the print turned into a tangle of strands, and paused the print.
+Посмотрите на печать через камеру. Если всё в порядке — продолжите. Ложные срабатывания: чувствительность или отключение ИИ — на экране принтера, раздел ИИ-обнаружения.	fault_101_todo	Check the print on the camera. If it looks fine, resume. False alarms: adjust sensitivity or turn off AI detection on the printer screen.
+ИИ-камера: дефект печати	fault_103_title	AI camera: print defect
+Камера с ИИ заметила дефект и поставила паузу.	fault_103_what	The AI camera spotted a defect and paused the print.
+Проверьте печать по камере; если всё в порядке — продолжите.	fault_103_todo	Check the print on the camera; if it looks fine, resume.
+ИИ-камера: посторонний предмет на столе	fault_104_title	AI camera: foreign object on the bed
+Перед печатью камера увидела на столе что-то лишнее (остатки прошлой модели, инструмент).	fault_104_what	Before printing the camera saw something on the bed (a leftover part, a tool).
+Уберите предметы со стола и запустите печать заново.	fault_104_todo	Clear the bed and start the print again.
+Прерванная печать после отключения питания	fault_115_title	Print interrupted by a power loss
+Принтер нашёл незавершённую печать — питание пропадало.	fault_115_what	The printer found an unfinished print — power was lost.
+На экране принтера можно продолжить печать или отказаться.	fault_115_todo	On the printer screen you can resume the print or discard it.
+Закончился филамент	fault_116_title	Filament runout
+Датчик прутка у экструдера перестал видеть пластик — печать на паузе.	fault_116_what	The filament sensor at the extruder no longer detects filament — the print is paused.
+Катушка кончилась, пруток оборвался или запутался до датчика. Заправьте пруток и продолжите печать.	fault_116_todo	The spool ran out, or the filament broke or tangled before the sensor. Load filament and resume the print.
+Не удалось начать печать с CFS	fault_122_title	Couldn't start a CFS print
+Принтер не смог подготовить CFS к печати.	fault_122_what	The printer couldn't prepare the CFS for printing.
+Проверьте, что бокс подключён, катушки назначены и пластик заправлен, затем запустите заново.	fault_122_todo	Check that the box is connected, spools are assigned and filament is loaded, then start again.
+CFS: пустая печать	fault_528_title	CFS: printing with no filament
+Пластик из бокса не доходит до сопла — печать идёт «вхолостую».	fault_528_what	Filament from the box doesn't reach the nozzle — the printer is printing air.
+Ошибка зондирования стола	fault_2005_title	Bed probing failed
+Зондирование прервано: Klipper остановился.	fault_2005_what	Probing was aborted: Klipper shut down.
+Перезапустите Klipper (Firmware Restart) и повторите.	fault_restart_klipper_retry	Restart Klipper (Firmware Restart) and try again.
+Не сработал концевик	fault_2022_title	Endstop not triggered
+При парковке ось прошла весь ход, но концевик не сработал.	fault_2022_what	During homing the axis travelled its full length but the endstop didn't trigger.
+Проверьте, не мешает ли что-то движению, и разъём концевика/датчика.	fault_2022_todo	Check that nothing blocks the motion and check the endstop/sensor connector.
+Внутренняя ошибка прошивки	fault_2060_title	Internal firmware error
+Команда G-code вызвала сбой — Klipper остановлен.	fault_2060_what	A G-code command caused a failure — Klipper is shut down.
+Перезапустите Klipper (Firmware Restart).	fault_restart_klipper	Restart Klipper (Firmware Restart).
+Нужна парковка осей	fault_2096_title	Axes must be homed
+Команда требует сначала выполнить парковку (G28).	fault_2096_what	This command requires homing (G28) first.
+Выполните парковку и повторите.	fault_2096_todo	Home the axes and try again.
+Экструзия на холодном сопле	fault_2111_title	Cold extrusion
+Сопло холоднее минимальной температуры экструзии (обычно 170°).	fault_2111_what	The nozzle is below the minimum extrusion temperature (usually 170°).
+Нагрейте сопло и повторите.	fault_2111_todo	Heat the nozzle and try again.
+Слишком большая экструзия	fault_2112_title	Extrusion too large
+Ход экструдера больше допустимого сечения — обычно ошибка в G-code.	fault_2112_what	The extruder move exceeds the allowed cross-section — usually a G-code problem.
+Перенарежьте модель; проверьте ширину линий и диаметр сопла.	fault_2112_todo	Re-slice the model; check line widths and the nozzle diameter.
+Сбой платы головы (MCU)	fault_mcu_title	Toolhead board (MCU) failure
+Klipper не успел отправить команды плате головы — защита остановила печать.	fault_mcu_what	Klipper didn't send commands to the toolhead board in time — a safety check stopped the print.
+Перезапустите принтер. При повторении — уменьшите нагрузку на принтер (камера, ИИ) и проверьте шлейф головы.	fault_2353_todo	Restart the printer. If it repeats, reduce the printer load (camera, AI) and check the toolhead cable.
+Перезапустите принтер. При повторении — проверьте шлейф головы.	fault_2355_todo	Restart the printer. If it repeats, check the toolhead cable.
+Датчик температуры сопла вне диапазона	fault_2509_title	Nozzle temperature sensor out of range
+Термистор сопла показывает невозможную температуру — обрыв или замыкание.	fault_2509_what	The nozzle thermistor reads an impossible temperature — an open or short circuit.
+Выключите принтер и проверьте разъём термистора на голове.	fault_2509_todo	Turn the printer off and check the thermistor connector on the toolhead.
+Сопло не нагревается	fault_2564_title	Nozzle isn't heating
+Нагреватель сопла греет медленнее, чем ожидалось, — защита от перегрева/обрыва остановила печать.	fault_2564_what	The nozzle heater heats slower than expected — thermal protection stopped the print.
+Проверьте разъём нагревателя и термистора. Сквозняк или снятый обдув сопла тоже могут быть причиной.	fault_2564_todo	Check the heater and thermistor connectors. A draft or a removed nozzle shroud can also cause this.
+Перемещение за пределы стола	fault_2585_title	Move out of range
+Команда двигает голову за границы области печати.	fault_2585_what	A command moves the head outside the print area.
+Проверьте модель и пресет принтера в слайсере.	fault_2585_todo	Check the model and the printer preset in the slicer.
+Драйвер мотора: перегрузка по току	fault_2784_title	Motor driver: overcurrent
+Драйвер шагового мотора зафиксировал длительный перегрузочный ток.	fault_2784_what	A stepper driver detected sustained overcurrent.
+Выключите принтер, проверьте, что оси двигаются свободно.	fault_2784_todo	Turn the printer off and check that the axes move freely.
+Драйвер мотора: пропуск шагов	fault_2789_title	Motor driver: lost steps
+Мотор отстал от заданного положения (замкнутый контур).	fault_2789_what	A motor fell behind its target position (closed loop).
+Проверьте, не упирается ли голова, нет ли зацепов ремней.	fault_2789_todo	Check that the head isn't blocked and the belts don't catch.
+Низкое напряжение питания моторов	fault_2796_title	Low motor supply voltage
+Проверьте питание принтера; при повторении — обратитесь в поддержку.	fault_2796_todo	Check the printer's power supply; if it repeats, contact support.
+Нет связи с мотором	fault_2798_title	No connection to a motor
+Плата не смогла подключиться к драйверу мотора.	fault_2798_what	The board couldn't connect to a motor driver.
+Перезапустите принтер; при повторении проверьте разъёмы моторов.	fault_2798_todo	Restart the printer; if it repeats, check the motor connectors.
+CFS: нет связи с боксом	fault_2831_title	CFS: no connection to the box
+Шина RS-485 к боксу не отвечает.	fault_2831_what	The RS-485 bus to the box doesn't respond.
+Проверьте кабель бокса и перезапустите принтер.	fault_2831_todo	Check the box cable and restart the printer.
+CFS: ошибка команды	fault_2834_title	CFS: command error
+Перезапустите принтер.	fault_restart_printer	Restart the printer.
+CFS: затор у соединителя	fault_2835_title	CFS: jam at the connector
+Пруток не проходит соединитель (хаб) на выходе из бокса.	fault_2835_what	The filament doesn't pass the connector (hub) at the box outlet.
+CFS: пруток не дошёл до датчика	fault_2836_title	CFS: filament didn't reach the sensor
+Пруток вышел из бокса, но не дошёл до датчика на голове — затор в трубке.	fault_2836_what	The filament left the box but didn't reach the toolhead sensor — a jam in the tube.
+CFS: затор у экструдера	fault_2837_title	CFS: jam at the extruder
+Пруток дошёл до датчика, но не захватывается шестернями экструдера.	fault_2837_what	The filament reached the sensor but the extruder gears don't grip it.
+Проверьте вход экструдера и кончик прутка (обрежьте под углом).	fault_2837_todo	Check the extruder inlet and the filament tip (cut it at an angle).
+CFS: пруток не подаётся	fault_2838_title	CFS: filament isn't feeding
+Пруток прошёл соединитель, но не подаётся дальше.	fault_2838_what	The filament passed the connector but doesn't feed further.
+CFS: нет прутка в позиции подачи	fault_2839_title	CFS: no filament at the feed position
+Бокс не видит пруток в выбранном слоте.	fault_2839_what	The box doesn't detect filament in the selected slot.
+Вставьте пруток в слот до щелчка или выберите другую катушку.	fault_2839_todo	Push the filament into the slot until it clicks, or pick another spool.
+CFS: ошибка переключения слота	fault_2840_title	CFS: slot switch error
+Проверьте бокс и повторите; при повторении — перезапустите принтер.	fault_2840_todo	Check the box and try again; if it repeats, restart the printer.
+Ошибка обрезки прутка	fault_2841_title	Filament cut error
+Нож не вернулся после обрезки.	fault_2841_what	The cutter didn't return after cutting.
+Проверьте нож на голове, нет ли там застрявшего кусочка пластика.	fault_2841_todo	Check the cutter on the toolhead for a stuck piece of filament.
+CFS: ошибка чтения RFID	fault_2843_title	CFS: RFID read error
+Не удалось прочитать метку катушки.	fault_2843_what	The spool tag couldn't be read.
+Задайте пластик слота вручную (вкладка «Управление» → «Катушки»).	fault_2843_todo	Set the slot's filament manually (Control tab → Spools).
+CFS: пневмосоединитель	fault_2844_title	CFS: pneumatic connector
+Соединитель трубки работает неправильно и может сложиться.	fault_2844_what	A tube connector isn't working properly and may collapse.
+Проверьте посадку трубок в соединителях.	fault_2844_todo	Check that the tubes are seated in the connectors.
+Засор сопла	fault_2845_title	Nozzle clog
+Пластик не выходит из сопла.	fault_2845_what	Filament doesn't come out of the nozzle.
+Прочистите сопло (нагрев, выдавливание, при необходимости — игла/холодная протяжка).	fault_2845_todo	Clean the nozzle (heat, extrude, use a needle or a cold pull if needed).
+Пустая печать: CFS не успевает	fault_2846_title	Printing with no filament: CFS too slow
+Бокс подаёт пруток медленнее, чем его потребляет экструдер.	fault_2846_what	The box feeds filament slower than the extruder uses it.
+Проверьте, не тормозит ли катушка (запутывание, трение), и путь прутка.	fault_2846_todo	Check whether the spool drags (tangles, friction) and check the filament path.
+Пустая печать: пруток запутался	fault_2847_title	Printing with no filament: tangled spool
+Пруток на катушке запутался и не подаётся.	fault_2847_what	The filament is tangled on the spool and doesn't feed.
+Распутайте катушку и продолжите печать.	fault_2847_todo	Untangle the spool and resume the print.
+CFS: возможен обрыв у соединителя	fault_2848_title	CFS: filament may be broken at the connector
+CFS: не удалось выгрузить пруток	fault_2849_title	CFS: couldn't unload filament
+Пруток не вышел из соединителя при смене цвета.	fault_2849_what	The filament didn't leave the connector during a color change.
+Вытяните пруток вручную и проверьте кончик (раздутый кончик застревает).	fault_2849_todo	Pull the filament out by hand and check the tip (a swollen tip gets stuck).
+CFS: ошибка выгрузки	fault_unload_title	CFS: unload error
+Сработало несколько соединителей одновременно.	fault_2850_what	Several connectors triggered at the same time.
+Проверьте, что в трубках нет лишних кусочков прутка.	fault_2850_todo	Check that there are no stray pieces of filament in the tubes.
+Буфер не опустел при выгрузке прутка.	fault_2851_what	The buffer didn't empty while unloading.
+Проверьте датчики прутка	fault_2852_title	Check the filament sensors
+Состояния датчиков экструдера и бокса противоречат друг другу.	fault_2852_what	The extruder and box sensors disagree.
+Убедитесь, что в голове нет обломка прутка.	fault_2852_todo	Make sure there's no broken piece of filament in the toolhead.
+CFS: датчик влажности	fault_2853_title	CFS: humidity sensor
+Перезапустите принтер; при повторении — поддержка.	fault_restart_or_support	Restart the printer; if it repeats, contact support.
+Пруток при обрезке	fault_2854_title	Filament detected while cutting
+При обрезке датчик всё ещё видит пруток.	fault_2854_what	The sensor still detects filament during the cut.
+Проверьте нож и уберите обрезки из головы.	fault_2854_todo	Check the cutter and remove scraps from the toolhead.
+Ошибка положения ножа	fault_2855_title	Cutter position error
+Проверьте нож обрезки на голове.	fault_2855_todo	Check the filament cutter on the toolhead.
+Не найден нож обрезки	fault_2856_title	Cutter not found
+Проверьте, установлен ли нож.	fault_2856_todo	Check that the cutter is installed.
+CFS: ошибка нагрузки мотора	fault_2857_title	CFS: motor load error
+Проверьте, не заклинило ли катушку.	fault_2857_todo	Check whether the spool is stuck.
+CFS: ошибка памяти бокса	fault_2858_title	CFS: box memory error
+CFS: ошибка мерного колеса	fault_2859_title	CFS: measuring wheel error
+Колесо, считающее длину прутка, не вращается.	fault_2859_what	The wheel that measures filament length doesn't turn.
+Проверьте, нет ли пыли и обрезков у колеса.	fault_2859_todo	Check the wheel for dust and scraps.
+CFS: ошибка буфера	fault_2860_title	CFS: buffer error
+CFS: ошибка RFID (левый считыватель)	fault_2861_title	CFS: RFID error (left reader)
+CFS: ошибка RFID (правый считыватель)	fault_2862_title	CFS: RFID error (right reader)
+CFS: пруток не вышел из головы	fault_2863_title	CFS: filament didn't leave the toolhead
+Выгрузка прошла, но датчик на голове всё ещё видит пруток.	fault_2863_what	Unloading finished but the toolhead sensor still detects filament.
+Проверьте, не обломился ли пруток внутри головы.	fault_2863_todo	Check whether filament broke off inside the toolhead.
+CFS: пруток не дошёл до буфера	fault_2864_title	CFS: filament didn't reach the buffer
+Вытяните пруток вручную и проверьте кончик.	fault_2865_todo	Pull the filament out by hand and check the tip.
+CFS: сушка — нагрев слишком долгий	fault_2870_title	CFS drying: heating takes too long
+Закройте крышку бокса и повторите сушку.	fault_2870_todo	Close the box lid and run drying again.
+CFS: сушка — перегрев	fault_2871_title	CFS drying: overheating
+Остановите сушку; при повторении — поддержка.	fault_2871_todo	Stop drying; if it repeats, contact support.
+CFS: неисправен нагреватель сушки	fault_2872_title	CFS: dryer heater fault
+CFS: неисправен датчик температуры сушки	fault_2873_title	CFS: dryer temperature sensor fault
+CFS: неисправен вентилятор сушки	fault_2874_title	CFS: dryer fan fault
+CFS: нагреватель сушки не подключён к сети	fault_2875_title	CFS: dryer heater isn't plugged in
+Подключите питание сушки бокса.	fault_2875_todo	Connect power to the box dryer.
+Klipper отключён	fault_3000_title	Klipper disconnected
+Службы Creality потеряли связь с Klipper.	fault_3000_what	The Creality services lost the connection to Klipper.
+Ошибка конфигурации Klipper	fault_3002_title	Klipper configuration error
+В printer.cfg ссылка на несуществующий файл или ошибка.	fault_3002_what	printer.cfg references a missing file or has an error.
+Исправьте конфигурацию во Fluidd и перезапустите.	fault_3002_todo	Fix the configuration in Fluidd and restart.
+Ошибка %1$s	fault_generic	Error %1$s
+CFS %1$s, слот %2$s	fault_cfs_slot	CFS %1$s, slot %2$s

@@ -1,0 +1,456 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Filum Slicer</title>
+<style>
+:root{--bg:#121212;--card:#1e2329;--card2:#262c33;--text:#e8eaed;--muted:#9aa0a6;--accent:#ff8a3d;--ok:#4caf50;--err:#ff5252;--line:#2f363e}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);font:15px/1.4 system-ui,-apple-system,Segoe UI,Roboto,sans-serif}
+main{max-width:860px;margin:0 auto;padding:12px 16px 40px}
+header{display:flex;align-items:center;gap:10px;padding:8px 0 14px}
+header h1{font-size:20px;margin:0;flex:1}
+.chip{font-size:12px;padding:3px 9px;border-radius:12px;background:var(--card2);color:var(--muted);white-space:nowrap}
+.chip.ok{color:var(--ok)}.chip.err{color:var(--err)}
+.card{background:var(--card);border-radius:14px;padding:14px 16px;margin-bottom:12px}
+.card h2{font-size:16px;margin:0 0 10px}
+.tabs{display:flex;gap:6px;margin-bottom:12px}
+.tabs button{flex:1}
+button{font:inherit;border:0;border-radius:10px;padding:9px 14px;background:var(--card2);color:var(--text);cursor:pointer}
+button.primary{background:var(--accent);color:#111;font-weight:600}
+button.sel{background:rgba(255,138,61,.18);color:var(--accent)}
+button:disabled{opacity:.45;cursor:default}
+input[type=text],input[type=password],input[type=search],select{width:100%;font:inherit;color:var(--text);background:#14181c;border:1px solid var(--line);border-radius:10px;padding:9px 10px}
+label{display:block;font-size:13px;color:var(--muted);margin:10px 0 4px}
+.row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.row>*{flex:1}
+.muted{color:var(--muted);font-size:13px}
+.err{color:var(--err)}
+.hidden{display:none!important}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px;margin-top:10px}
+.tile{background:var(--card2);border-radius:12px;overflow:hidden;cursor:pointer}
+.tile img{width:100%;aspect-ratio:1;object-fit:cover;background:#0e1013;display:block}
+.tile div{padding:7px 9px;font-size:13px}
+.tile .t{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.list{display:flex;flex-direction:column;gap:6px}
+.item{display:flex;gap:10px;align-items:center;background:var(--card2);border-radius:10px;padding:8px 10px;cursor:pointer}
+.item img{width:56px;height:56px;border-radius:8px;object-fit:cover;background:#0e1013}
+.item .grow{flex:1;min-width:0}
+.item .name{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.item.active{outline:2px solid var(--accent)}
+.model{display:flex;gap:12px;align-items:center}
+.model img{width:88px;height:88px;border-radius:10px;object-fit:contain;background:#0e1013}
+.slot{display:flex;gap:8px;align-items:center;margin-top:6px}
+.swatch{width:18px;height:18px;border-radius:5px;border:1px solid #0006;flex:none}
+.check{display:flex;align-items:center;gap:8px;margin-top:10px;color:var(--text);font-size:14px}
+.check input{width:18px;height:18px;accent-color:var(--accent)}
+.progress{height:6px;background:var(--card2);border-radius:3px;overflow:hidden;margin:8px 0}
+.progress div{height:100%;width:0;background:var(--accent);transition:width .2s}
+.progress.busy div{width:35%;animation:busy 1.2s infinite ease-in-out}
+@keyframes busy{0%{margin-left:-35%}100%{margin-left:100%}}
+.result{background:var(--card2);border-radius:10px;padding:10px 12px;margin-top:8px}
+.stats{display:flex;gap:16px;flex-wrap:wrap;margin:4px 0 8px}
+.stats b{display:block;font-size:17px}
+pre{white-space:pre-wrap;font-size:11px;color:var(--muted);max-height:200px;overflow:auto;background:#0e1013;padding:8px;border-radius:8px}
+a{color:var(--accent)}
+</style>
+</head>
+<body>
+<main>
+<header>
+  <h1>Filum Slicer</h1>
+  <span id="syncChip" class="chip" data-ru="пресеты…">presets…</span>
+  <button id="syncBtn" title="Refresh presets from orca-sync" data-ru-title="Обновить пресеты с orca-sync">⟳</button>
+</header>
+
+<section class="card">
+  <h2 data-ru="Модель">Model</h2>
+  <div class="tabs">
+    <button data-tab="file" class="sel" data-ru="Файл">File</button>
+    <button data-tab="mw">MakerWorld</button>
+    <button data-tab="recent" data-ru="Недавние">Recent</button>
+  </div>
+
+  <div id="tab-file">
+    <input id="fileInput" type="file" accept=".stl,.3mf,.obj,.step,.stp" class="hidden">
+    <button id="pickBtn" class="primary" style="width:100%" data-ru="Выбрать STL / 3MF / STEP">Choose STL / 3MF / STEP</button>
+    <div id="upProg" class="progress hidden"><div></div></div>
+    <div id="upMsg" class="muted"></div>
+  </div>
+
+  <div id="tab-mw" class="hidden">
+    <div id="mwAccount" class="muted" style="margin-bottom:8px"></div>
+    <div id="mwLogin" class="hidden">
+      <div class="muted" data-ru="Скачивание моделей требует входа в аккаунт Bambu (MakerWorld).">Downloading models requires a Bambu (MakerWorld) account.</div>
+      <label data-ru="Почта">Email</label><input id="mwAcc" type="text" autocomplete="username">
+      <div id="mwPassRow"><label data-ru="Пароль">Password</label><input id="mwPass" type="password" autocomplete="current-password"></div>
+      <div id="mwCodeRow" class="hidden"><label data-ru="Код из письма">Code from the email</label><input id="mwCode" type="text" inputmode="numeric"></div>
+      <div class="row" style="margin-top:10px"><button id="mwLoginBtn" class="primary" data-ru="Войти">Log in</button></div>
+      <details style="margin-top:8px"><summary class="muted" data-ru="или вставить токен">or paste a token</summary>
+        <input id="mwToken" type="text" placeholder="accessToken from Bambu Studio / the browser" data-ru-placeholder="accessToken из Bambu Studio / браузера" style="margin-top:6px">
+        <button id="mwTokenBtn" style="margin-top:6px" data-ru="Сохранить токен">Save token</button>
+      </details>
+      <div id="mwLoginMsg" class="err"></div>
+    </div>
+    <div class="row">
+      <input id="mwQuery" type="search" placeholder="Search or a makerworld.com model link" data-ru-placeholder="Поиск или ссылка на модель makerworld.com">
+      <button id="mwSearchBtn" style="flex:none" data-ru="Найти">Find</button>
+    </div>
+    <div id="mwMsg" class="muted"></div>
+    <div id="mwResults" class="grid"></div>
+    <button id="mwMore" class="hidden" style="width:100%;margin-top:10px" data-ru="Ещё">More</button>
+    <div id="mwDesign" class="hidden"></div>
+  </div>
+
+  <div id="tab-recent" class="hidden"><div id="recentList" class="list"></div></div>
+</section>
+
+<section id="modelCard" class="card hidden">
+  <div class="model">
+    <img id="modelThumb" alt="">
+    <div class="grow">
+      <div id="modelName" style="font-weight:600;word-break:break-all"></div>
+      <div id="modelMeta" class="muted"></div>
+    </div>
+  </div>
+  <div id="plateRow" class="hidden"><label data-ru="Стол">Plate</label><select id="plateSel"></select></div>
+</section>
+
+<section class="card">
+  <h2 data-ru="Настройки">Settings</h2>
+  <label data-ru="Принтер">Printer</label><select id="printerSel"></select>
+  <label data-ru="Процесс">Process</label><select id="processSel"></select>
+  <label data-ru="Пластик">Filament</label>
+  <div id="filamentSlots"></div>
+  <label class="check"><input id="arrangeChk" type="checkbox" checked> <span data-ru="Авторасстановка на столе">Auto-arrange on the bed</span></label>
+  <label class="check"><input id="uploadChk" type="checkbox" checked> <span data-ru="Отправить на принтер">Send to the printer</span></label>
+  <div id="hostRow"><label data-ru="Адрес принтера (IP или хост[:порт] Moonraker)">Printer address (IP or host[:port] of Moonraker)</label><input id="hostInp" type="text" placeholder="192.168.1.50"></div>
+  <label class="check"><input id="startChk" type="checkbox"> <span data-ru="Сразу начать печать">Start printing right away</span></label>
+  <button id="sliceBtn" class="primary" style="width:100%;margin-top:14px" disabled data-ru="Нарезать">Slice</button>
+  <div id="sliceMsg" class="err"></div>
+</section>
+
+<section id="jobCard" class="card hidden">
+  <h2 id="jobTitle" data-ru="Нарезка">Slicing</h2>
+  <div id="jobProg" class="progress busy"><div></div></div>
+  <div id="jobState" class="muted"></div>
+  <div id="jobResults"></div>
+  <details id="jobLogBox" class="hidden"><summary class="muted" data-ru="Журнал OrcaSlicer">OrcaSlicer log</summary><pre id="jobLog"></pre></details>
+</section>
+
+<section class="card">
+  <h2 data-ru="История">History</h2>
+  <div id="jobList" class="list"><div class="muted" data-ru="Пока пусто">Nothing yet</div></div>
+</section>
+</main>
+
+<script>
+const $ = id => document.getElementById(id);
+// Язык — по браузеру: английский по умолчанию, русский для ru-*
+const LANG = (navigator.language || 'en').toLowerCase().startsWith('ru') ? 'ru' : 'en';
+const T = (en, ru) => LANG === 'ru' ? ru : en;
+if (LANG === 'ru') {
+  document.documentElement.lang = 'ru';
+  document.querySelectorAll('[data-ru]').forEach(e => e.textContent = e.dataset.ru);
+  document.querySelectorAll('[data-ru-placeholder]').forEach(e => e.placeholder = e.dataset.ruPlaceholder);
+  document.querySelectorAll('[data-ru-title]').forEach(e => e.title = e.dataset.ruTitle);
+}
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const store = {get(k){try{return localStorage.getItem('filum.'+k)}catch(e){return null}}, set(k,v){try{localStorage.setItem('filum.'+k,v)}catch(e){}}};
+
+async function api(path, opts = {}) {
+  const r = await fetch(path, opts);
+  const ct = r.headers.get('content-type') || '';
+  const data = ct.includes('json') ? await r.json() : await r.text();
+  if (!r.ok) throw new Error((data && data.error) || ('HTTP ' + r.status));
+  return data;
+}
+const post = (path, body) => api(path, {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(body || {})});
+
+let model = null, presets = null, currentJob = null, pollTimer = null;
+// Адрес принтера для отправки G-code (сервер сам загружает файл в Moonraker)
+const printerHost = () => $('hostInp').value.trim();
+$('hostInp').value = store.get('host') || '';
+$('hostInp').onchange = () => store.set('host', printerHost());
+
+// ---------- вкладки ----------
+document.querySelectorAll('[data-tab]').forEach(b => b.onclick = () => {
+  document.querySelectorAll('[data-tab]').forEach(x => x.classList.toggle('sel', x === b));
+  for (const t of ['file','mw','recent']) $('tab-'+t).classList.toggle('hidden', t !== b.dataset.tab);
+  if (b.dataset.tab === 'recent') loadRecent();
+  if (b.dataset.tab === 'mw') mwStatus();
+});
+
+// ---------- пресеты ----------
+function fillSelect(sel, items, value) {
+  sel.innerHTML = items.map(i => `<option value="${esc(i.name)}">${i.user ? '★ ' : ''}${esc(i.name)}</option>`).join('');
+  if (value && items.some(i => i.name === value)) sel.value = value;
+}
+async function loadPresets(printer) {
+  const q = printer ? '?printer=' + encodeURIComponent(printer) : '';
+  presets = await api('/api/presets' + q);
+  const d = presets.defaults;
+  fillSelect($('printerSel'), presets.printers, presets.printer);
+  fillSelect($('processSel'), presets.processes, store.get('process:' + presets.printer) || d.process);
+  renderSlots();
+  const s = presets.sync;
+  $('syncChip').className = 'chip ' + (s.ok ? 'ok' : 'err');
+  $('syncChip').textContent = s.ok ? `orca-sync: ${s.count}` : 'orca-sync: ' + T('error','ошибка');
+  $('syncChip').title = s.error || '';
+  updateSliceBtn();
+}
+function renderSlots() {
+  if (!presets) return;
+  const slots = (model && model.info && model.info.filaments) || [{slot:1}];
+  const saved = JSON.parse(store.get('fil:' + presets.printer) || '[]');
+  $('filamentSlots').innerHTML = slots.map((s, i) => `
+    <div class="slot">${slots.length > 1 ? `<span class="swatch" style="background:${esc((s.color||'#888').slice(0,7))}"></span><span class="muted" style="flex:none;width:70px">${i+1}${s.type ? ' · '+esc(s.type) : ''}</span>` : ''}
+      <select data-slot="${i}"></select></div>`).join('');
+  document.querySelectorAll('[data-slot]').forEach((sel, i) => {
+    fillSelect(sel, presets.filaments, saved[i] || saved[0] || presets.defaults.filament);
+    sel.onchange = saveFil;
+  });
+}
+function saveFil() {
+  store.set('fil:' + presets.printer, JSON.stringify([...document.querySelectorAll('[data-slot]')].map(s => s.value)));
+}
+$('printerSel').onchange = () => { store.set('printer', $('printerSel').value); loadPresets($('printerSel').value).catch(showErr); };
+$('processSel').onchange = () => store.set('process:' + presets.printer, $('processSel').value);
+$('syncBtn').onclick = async () => {
+  $('syncChip').textContent = T('updating…','обновление…');
+  try { await post('/api/presets/refresh'); await loadPresets($('printerSel').value); } catch (e) { showErr(e); }
+};
+
+// ---------- модель ----------
+function setModel(m) {
+  model = m;
+  $('modelCard').classList.remove('hidden');
+  $('modelName').textContent = m.title || m.name;
+  const fil = (m.info.filaments || []).length;
+  $('modelMeta').textContent = [m.source === 'makerworld' ? 'MakerWorld' + (m.author ? ' · ' + m.author : '') : T('file','файл'),
+    (m.size/1048576).toFixed(1) + T(' MB',' МБ'), fil > 1 ? fil + T(' filaments',' пластика') : '', m.info.warning || ''].filter(Boolean).join(' · ');
+  const img = $('modelThumb');
+  img.src = m.info.has_thumb ? `/api/models/${m.id}/thumb` : (m.cover || '');
+  img.style.visibility = img.src ? 'visible' : 'hidden';
+  const plates = m.info.plates || [1];
+  $('plateRow').classList.toggle('hidden', plates.length < 2);
+  $('plateSel').innerHTML = `<option value="0">${T('All plates','Все столы')} (${plates.length})</option>` + plates.map(p => `<option value="${p}">${T('Plate','Стол')} ${p}</option>`).join('');
+  $('plateSel').value = plates.length > 1 ? String(plates[0]) : '0';
+  $('plateSel').onchange = () => { if (m.info.has_thumb && +$('plateSel').value) img.src = `/api/models/${m.id}/thumb?plate=${$('plateSel').value}`; };
+  renderSlots();
+  updateSliceBtn();
+}
+function updateSliceBtn() { $('sliceBtn').disabled = !(model && presets && $('printerSel').value); }
+
+$('pickBtn').onclick = () => $('fileInput').click();
+$('fileInput').onchange = () => {
+  const f = $('fileInput').files[0];
+  if (!f) return;
+  const xhr = new XMLHttpRequest();
+  xhr.open('POST', '/api/models?name=' + encodeURIComponent(f.name));
+  $('upProg').classList.remove('hidden'); $('upMsg').textContent = T('Uploading ','Загрузка ') + f.name;
+  xhr.upload.onprogress = e => { if (e.lengthComputable) $('upProg').firstElementChild.style.width = (100*e.loaded/e.total) + '%'; };
+  xhr.onload = () => {
+    $('upProg').classList.add('hidden'); $('fileInput').value = '';
+    let d = {}; try { d = JSON.parse(xhr.responseText); } catch (e) {}
+    if (xhr.status !== 200) { $('upMsg').innerHTML = '<span class="err">' + esc(d.error || T('Upload failed','Ошибка загрузки')) + '</span>'; return; }
+    $('upMsg').textContent = ''; setModel(d);
+  };
+  xhr.onerror = () => { $('upProg').classList.add('hidden'); $('upMsg').innerHTML = '<span class="err">' + T('Network unavailable','Сеть недоступна') + '</span>'; };
+  xhr.send(f);
+};
+
+async function loadRecent() {
+  const {models} = await api('/api/models');
+  $('recentList').innerHTML = models.length ? models.map(m => `
+    <div class="item${model && model.id === m.id ? ' active' : ''}" data-id="${m.id}">
+      <img src="${m.info.has_thumb ? `/api/models/${m.id}/thumb` : esc(m.cover || '')}" alt="" onerror="this.style.visibility='hidden'">
+      <div class="grow"><div class="name">${esc(m.title || m.name)}</div>
+      <div class="muted">${m.source === 'makerworld' ? 'MakerWorld' : T('file','файл')} · ${new Date(m.created*1000).toLocaleString(LANG)}</div></div></div>`).join('')
+    : '<div class="muted">' + T('Nothing yet','Пока пусто') + '</div>';
+  document.querySelectorAll('#recentList .item').forEach(el => el.onclick = () => {
+    setModel(models.find(m => m.id === el.dataset.id)); loadRecent();
+  });
+}
+
+// ---------- MakerWorld ----------
+let mwOffset = 0, mwQ = '', mwAccountState = null;
+async function mwStatus() {
+  mwAccountState = await api('/api/makerworld/status');
+  $('mwAccount').innerHTML = mwAccountState.logged_in
+    ? `${T('Bambu account','Аккаунт Bambu')}: ${esc(mwAccountState.account || T('token saved','токен сохранён'))} · <a href="#" id="mwLogout">${T('log out','выйти')}</a>`
+    : T('Search works without logging in; log in to a Bambu account to download a model.','Поиск работает без входа; чтобы скачать модель — войдите в аккаунт Bambu.');
+  $('mwLogin').classList.toggle('hidden', mwAccountState.logged_in);
+  const lo = $('mwLogout'); if (lo) lo.onclick = async e => { e.preventDefault(); await post('/api/makerworld/logout'); mwStatus(); };
+}
+$('mwLoginBtn').onclick = async () => {
+  $('mwLoginMsg').textContent = '';
+  const body = {account: $('mwAcc').value, password: $('mwPass').value, code: $('mwCode').value};
+  if ($('mwCodeRow').classList.contains('hidden')) delete body.code;
+  try {
+    const r = await post('/api/makerworld/login', body);
+    if (r.need_code) {
+      $('mwCodeRow').classList.remove('hidden'); $('mwPassRow').classList.add('hidden');
+      $('mwLoginMsg').textContent = T('Bambu has emailed you a code — enter it.','Bambu отправил код на почту — введите его.');
+      return;
+    }
+    $('mwPass').value = $('mwCode').value = '';
+    $('mwCodeRow').classList.add('hidden'); $('mwPassRow').classList.remove('hidden');
+    mwStatus();
+  } catch (e) { $('mwLoginMsg').textContent = e.message; }
+};
+$('mwTokenBtn').onclick = async () => {
+  try { await post('/api/makerworld/login', {token: $('mwToken').value, account: $('mwAcc').value || null}); $('mwToken').value = ''; mwStatus(); }
+  catch (e) { $('mwLoginMsg').textContent = e.message; }
+};
+
+async function mwSearch(more) {
+  const q = $('mwQuery').value.trim();
+  if (!q) return;
+  $('mwDesign').classList.add('hidden'); $('mwResults').classList.remove('hidden');
+  if (/makerworld\.com|^\d+$/.test(q)) {           // ссылка или id → сразу карточка
+    try { const r = await api('/api/makerworld/resolve?url=' + encodeURIComponent(q)); return mwOpen(r.design_id, r.profile_id); }
+    catch (e) { $('mwMsg').innerHTML = '<span class="err">' + esc(e.message) + '</span>'; return; }
+  }
+  if (!more) { mwOffset = 0; mwQ = q; $('mwResults').innerHTML = ''; }
+  $('mwMsg').textContent = T('Searching…','Поиск…');
+  try {
+    const r = await api(`/api/makerworld/search?q=${encodeURIComponent(mwQ)}&offset=${mwOffset}`);
+    mwOffset += r.hits.length;
+    $('mwMsg').textContent = r.total ? `${T('Found','Найдено')}: ${r.total}` : T('Nothing found','Ничего не найдено');
+    $('mwResults').insertAdjacentHTML('beforeend', r.hits.map(h => `
+      <div class="tile" data-id="${h.id}"><img loading="lazy" src="${esc(h.cover || '')}" alt="">
+      <div><div class="t">${esc(h.title)}</div><div class="muted">⬇ ${h.downloads ?? 0} · ${esc(h.author || '')}</div></div></div>`).join(''));
+    document.querySelectorAll('#mwResults .tile').forEach(el => el.onclick = () => mwOpen(el.dataset.id));
+    $('mwMore').classList.toggle('hidden', mwOffset >= r.total || !r.hits.length);
+  } catch (e) { $('mwMsg').innerHTML = '<span class="err">' + esc(e.message) + '</span>'; }
+}
+$('mwSearchBtn').onclick = () => mwSearch(false);
+$('mwQuery').onkeydown = e => { if (e.key === 'Enter') mwSearch(false); };
+$('mwMore').onclick = () => mwSearch(true);
+
+async function mwOpen(id, profileId) {
+  $('mwMsg').textContent = T('Loading the model…','Загрузка модели…');
+  try {
+    const d = await api('/api/makerworld/design/' + id);
+    $('mwMsg').textContent = '';
+    $('mwResults').classList.add('hidden'); $('mwMore').classList.add('hidden');
+    const byProfile = profileId && d.instances.find(i => i.profile_id == profileId);
+    const sel = (byProfile && byProfile.id) || d.default_instance || (d.instances[0] || {}).id;
+    $('mwDesign').classList.remove('hidden');
+    $('mwDesign').innerHTML = `
+      <div class="model" style="margin-top:10px"><img src="${esc(d.cover || '')}" alt="">
+        <div class="grow"><div style="font-weight:600">${esc(d.title)}</div><div class="muted">${esc(d.author || '')}</div>
+        <a href="https://makerworld.com/${LANG}/models/${d.id}" target="_blank" rel="noopener" class="muted">${T('open on MakerWorld','открыть на MakerWorld')}</a></div></div>
+      <label>${T('Print profile (its arrangement and colors are used; settings stay yours)','Профиль печати (из него берутся расстановка и число цветов; настройки — ваши)')}</label>
+      <div class="list">${d.instances.map(i => `
+        <div class="item${i.id == sel ? ' active' : ''}" data-inst="${i.id}">
+          <img src="${esc((i.plates[0] || {}).thumb || i.cover || '')}" alt="">
+          <div class="grow"><div class="name">${esc(i.title || T('Profile ','Профиль ') + i.id)}</div>
+          <div class="muted">${esc(i.printer || '')} · ${T('plates','столов')}: ${i.plates.length || 1} · ${T('filaments','пластиков')}: ${i.materials}</div></div></div>`).join('')}</div>
+      <div class="row" style="margin-top:10px"><button id="mwBack" style="flex:none">← ${T('Back','Назад')}</button><button id="mwImport" class="primary">${T('Import','Импортировать')}</button></div>
+      <div id="mwImportMsg" class="muted"></div>`;
+    let chosen = sel;
+    document.querySelectorAll('#mwDesign [data-inst]').forEach(el => el.onclick = () => {
+      chosen = el.dataset.inst;
+      document.querySelectorAll('#mwDesign [data-inst]').forEach(x => x.classList.toggle('active', x === el));
+    });
+    $('mwBack').onclick = () => { $('mwDesign').classList.add('hidden'); $('mwResults').classList.remove('hidden'); };
+    $('mwImport').onclick = async () => {
+      if (!mwAccountState || !mwAccountState.logged_in) { $('mwImportMsg').innerHTML = '<span class="err">' + T('Log in to a Bambu account first (above).','Сначала войдите в аккаунт Bambu (выше).') + '</span>'; return; }
+      $('mwImport').disabled = true; $('mwImportMsg').textContent = T('Downloading 3MF…','Скачивание 3MF…');
+      try { const m = await post('/api/makerworld/import', {design_id: d.id, instance_id: chosen}); $('mwImportMsg').textContent = T('Done','Готово'); setModel(m); $('modelCard').scrollIntoView({behavior:'smooth'}); }
+      catch (e) { $('mwImportMsg').innerHTML = '<span class="err">' + esc(e.message) + '</span>'; }
+      $('mwImport').disabled = false;
+    };
+  } catch (e) { $('mwMsg').innerHTML = '<span class="err">' + esc(e.message) + '</span>'; }
+}
+
+// ---------- нарезка ----------
+$('uploadChk').onchange = () => { $('startChk').disabled = !$('uploadChk').checked; if (!$('uploadChk').checked) $('startChk').checked = false; };
+$('sliceBtn').onclick = async () => {
+  $('sliceMsg').textContent = '';
+  if ($('startChk').checked && !confirm(T('Start printing right after slicing?','Сразу начать печать на принтере после нарезки?'))) return;
+  try {
+    const j = await post('/api/slice', {
+      model_id: model.id, printer: $('printerSel').value, process: $('processSel').value,
+      filaments: [...document.querySelectorAll('[data-slot]')].map(s => s.value),
+      plate: +$('plateSel').value || 0, arrange: $('arrangeChk').checked,
+      upload: $('uploadChk').checked, start: $('startChk').checked, printer_host: printerHost(),
+    });
+    showJob(j.id);
+  } catch (e) { $('sliceMsg').textContent = e.message; }
+};
+
+function showJob(id) {
+  currentJob = id;
+  $('jobCard').classList.remove('hidden');
+  $('jobCard').scrollIntoView({behavior:'smooth'});
+  clearTimeout(pollTimer);
+  poll();
+}
+async function poll() {
+  let j;
+  try { j = await api('/api/jobs/' + currentJob); } catch (e) { $('jobState').textContent = e.message; return; }
+  renderJob(j);
+  if (j.state === 'queued' || j.state === 'slicing') pollTimer = setTimeout(poll, 1500);
+  else loadJobs();
+}
+function renderJob(j) {
+  $('jobTitle').textContent = j.model_name;
+  const busy = j.state === 'queued' || j.state === 'slicing';
+  $('jobProg').classList.toggle('hidden', !busy);
+  $('jobState').innerHTML = {
+    queued: `${T('Queued','В очереди')}${j.queue_position ? ' (' + j.queue_position + ')' : ''}…`,
+    slicing: T('OrcaSlicer is slicing…','OrcaSlicer режет…'),
+    done: `${T('Done in','Готово за')} ${j.slice_seconds ?? '?'} ${T('s','с')} · ${esc(j.process)}`,
+    error: '<span class="err">' + T('Error: ','Ошибка: ') + esc(j.error) + '</span>',
+  }[j.state] || j.state;
+  $('jobResults').innerHTML = (j.results || []).map(r => `
+    <div class="result">
+      <div style="word-break:break-all">${esc(r.file)}</div>
+      <div class="stats">
+        <span><b>${esc(r.time || '—')}</b><span class="muted">${T('time','время')}</span></span>
+        <span><b>${r.grams ? esc(r.grams) + T(' g',' г') : '—'}</b><span class="muted">${T('filament','пластик')}</span></span>
+        <span><b>${(r.size/1048576).toFixed(1)} ${T('MB','МБ')}</b><span class="muted">G-code</span></span>
+        ${r.layers ? `<span><b>${esc(r.layers)}</b><span class="muted">${T('layers','слоёв')}</span></span>` : ''}
+      </div>
+      ${r.printing ? '<div style="color:var(--ok)">✓ ' + T('Sent, print started','Отправлено, печать запущена') + '</div>' : r.uploaded ? '<div style="color:var(--ok)">✓ ' + T('Uploaded to the printer','Загружено на принтер') + '</div>' : ''}
+      ${r.upload_error ? `<div class="err">${T('Could not send','Не удалось отправить')}: ${esc(r.upload_error)}</div>` : ''}
+      <div class="row" style="margin-top:8px">
+        <a href="/api/jobs/${j.id}/gcode/${r.plate}"><button style="width:100%">${T('Download','Скачать')}</button></a>
+        ${r.uploaded ? '' : `<button data-up="${r.plate}">${T('Upload','На принтер')}</button>`}
+        ${r.printing ? '' : `<button data-print="${r.plate}" class="primary">${T('Print','Печать')}</button>`}
+      </div>
+    </div>`).join('');
+  document.querySelectorAll('[data-up],[data-print]').forEach(b => b.onclick = async () => {
+    const start = !!b.dataset.print;
+    if (start && !confirm(T('Start printing on the printer?','Начать печать на принтере?'))) return;
+    b.disabled = true;
+    try { renderJob(await post(`/api/jobs/${j.id}/upload`, {plate: +(b.dataset.up || b.dataset.print), start, printer_host: printerHost()})); }
+    catch (e) { alert(e.message); b.disabled = false; }
+  });
+  $('jobLogBox').classList.toggle('hidden', !j.log);
+  $('jobLog').textContent = j.log || '';
+}
+async function loadJobs() {
+  const {jobs} = await api('/api/jobs');
+  if (!jobs.length) return;
+  $('jobList').innerHTML = jobs.map(j => `
+    <div class="item" data-job="${j.id}"><div class="grow">
+      <div class="name">${esc(j.model_name)}</div>
+      <div class="muted">${new Date(j.created*1000).toLocaleString('ru')} · ${
+        j.state === 'done' ? (j.results.map(r => r.time).filter(Boolean).join(', ') || T('done','готово')) : j.state === 'error' ? T('error','ошибка') : T('in progress','в работе')}</div>
+    </div><span class="chip ${j.state === 'done' ? 'ok' : j.state === 'error' ? 'err' : ''}">${
+      j.results.some(r => r.printing) ? T('printing','печать') : j.results.some(r => r.uploaded) ? T('on the printer','на принтере') : j.state === 'done' ? T('done','готово') : j.state === 'error' ? T('error','ошибка') : '…'}</span></div>`).join('');
+  document.querySelectorAll('[data-job]').forEach(el => el.onclick = () => showJob(el.dataset.job));
+}
+
+function showErr(e) { $('sliceMsg').textContent = e.message || String(e); }
+
+loadPresets(store.get('printer')).catch(showErr);
+loadJobs().catch(() => {});
+</script>
+</body>
+</html>

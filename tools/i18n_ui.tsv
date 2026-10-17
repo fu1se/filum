@@ -1,0 +1,299 @@
+Авто (по модели принтера)	camera_auto	Auto (by printer model)
+go2rtc (порт 1984)	camera_go2rtc	go2rtc (port 1984)
+WebRTC Creality (порт 8000)	camera_webrtc	Creality WebRTC (port 8000)
+MJPEG (порт 8080)	camera_mjpeg	MJPEG (port 8080)
+Веб-страница	camera_page	Web page
+Выключена	camera_off	Off
+Таймлапс: %1$s	timelapse_download_title	Timelapse: %1$s
+Скачивание в Фильмы/Filum Timelapse	timelapse_downloading	Downloading to Movies/Filum Timelapse
+Не удалось скачать: %1$s	download_failed	Download failed: %1$s
+Слайсер недоступен	slicer_unavailable	Slicer unavailable
+не задан адрес принтера	printer_address_missing	printer address is not set
+CFS недоступен	cfs_unavailable	CFS unavailable
+Библиотека пластиков: %1$s	material_library_error	Material library: %1$s
+%1$s: %2$s сохранён	slot_saved	%1$s: %2$s saved
+Принтер ещё не подтвердил правку — обновите CFS	slot_not_confirmed	The printer has not confirmed the change yet — refresh CFS
+Печать запущена	print_started	Print started
+G-code загружен на принтер	gcode_uploaded	G-code uploaded to the printer
+Bambu отправил код на почту	bambu_code_sent	Bambu has emailed you a code
+Подключение к %1$s …	log_connecting	Connecting to %1$s …
+Подключено	log_connected	Connected
+Соединение закрыто (%1$s)	log_closed	Connection closed (%1$s)
+Ошибка соединения: %1$s	log_conn_error	Connection error: %1$s
+%1$s. Повтор через 3 с	log_retry	%1$s. Retrying in 3 s
+Klipper не готов: %1$s. Повтор через 2 с	log_klipper_not_ready	Klipper is not ready: %1$s. Retrying in 2 s
+Ошибка: %1$s	log_error	Error: %1$s
+Klipper готов	log_klipper_ready	Klipper is ready
+Klipper остановлен	klipper_shutdown	Klipper is shut down
+Klipper отключился	log_klipper_disconnected	Klipper disconnected
+Нет соединения: %1$s не отправлен	log_not_sent	Not connected: %1$s was not sent
+Пауза	pause	Pause
+Продолжить	resume	Resume
+Отмена печати	log_cancel_print	Cancel print
+Печать %1$s	log_print_file	Print %1$s
+Нет данных	status_no_data	No data
+Klipper запускается	status_klipper_starting	Klipper is starting
+Ошибка Klipper	status_klipper_error	Klipper error
+Klipper не подключён	status_klipper_disconnected	Klipper is not connected
+Готов	status_ready	Ready
+Печать	status_printing	Printing
+Печать завершена	status_complete	Print complete
+Печать отменена	status_cancelled	Print cancelled
+Ошибка печати	status_error	Print error
+Катушка	spool	Spool
+Сервер слайсера не настроен: укажите адрес в настройках (⚙)	slicer_not_configured	Slicer server is not configured: set its address in settings (⚙)
+Поддерживаются STL, 3MF, OBJ и STEP (выбран «%1$s»)	unsupported_model	STL, 3MF, OBJ and STEP are supported (selected “%1$s”)
+Не удалось открыть файл	file_open_failed	Could not open the file
+Неожиданный формат данных предпросмотра	preview_bad_format	Unexpected preview data format
+пустой ответ	empty_response	empty response
+Подключение…	connecting	Connecting…
+Нет связи с принтером %1$s	notif_no_link_host	No connection to printer %1$s
+Перезапустите Klipper (Firmware Restart) во Fluidd или на экране принтера.	notif_restart_klipper	Restart Klipper (Firmware Restart) in Fluidd or on the printer screen.
+за %1$s	notif_took	in %1$s
+Печать на паузе	notif_paused	Print paused
+Что делать: %1$s	notif_todo	What to do: %1$s
+Слой %1$s/%2$s	layer_of	Layer %1$s/%2$s
+осталось %1$s	notif_left	%1$s left
+прошло %1$s	notif_elapsed	%1$s elapsed
+Пауза · %1$s%	notif_paused_pct	Paused · %1$s%%
+Печать %1$s%	notif_printing_pct	Printing %1$s%%
+нет связи с принтером	notif_no_link	no connection to the printer
+%1$s ч %2$s мин	duration_h_min	%1$s h %2$s min
+%1$s мин	duration_min	%1$s min
+Ход печати	channel_progress	Print progress
+Постоянное уведомление с прогрессом во время печати	channel_progress_desc	Ongoing notification with progress while printing
+Окончание печати	channel_events	Print finished
+Печать завершена, отменена или поставлена на паузу	channel_events_desc	Print completed, cancelled or paused
+Ошибки принтера	channel_errors	Printer errors
+Закончился филамент, ошибки CFS, остановка Klipper и т. п.	channel_errors_desc	Filament runout, CFS errors, Klipper shutdown, etc.
+Мониторинг	channel_monitor	Monitoring
+Фоновое подключение к принтеру, пока нет печати. Можно отключить — уведомления о печати останутся	channel_monitor_desc	Background connection to the printer while idle. You can turn this off — print notifications will still work
+Главная	tab_home	Home
+Управление	tab_control	Control
+Слайсер	tab_slicer	Slicer
+Файлы	tab_files	Files
+Таймлапсы	tab_timelapses	Timelapses
+Принтеры	printers	Printers
+Добавить принтер	add_printer	Add printer
+Нет соединения	not_connected	Not connected
+Подключить	connect	Connect
+Консоль	console	Console
+Настройки	settings	Settings
+Новый принтер	new_printer	New printer
+IP-адрес принтера	printer_ip	Printer IP address
+Название (необязательно)	printer_name	Name (optional)
+K2 Plus в мастерской	printer_name_hint	K2 Plus in the workshop
+IP можно посмотреть на экране принтера: Настройки → Сеть.	printer_ip_hint	You can find the IP on the printer screen: Settings → Network.
+Камера	camera	Camera
+Адрес камеры (необязательно)	camera_url	Camera URL (optional)
+Адрес сервера слайсера	slicer_url	Slicer server URL
+Уведомления	notifications	Notifications
+Прогресс печати, окончание и ошибки — даже когда приложение закрыто	notifications_desc	Print progress, completion and errors — even when the app is closed
+Сохранить	save	Save
+Удалить	delete	Delete
+Отмена	cancel	Cancel
+Читаю CFS…	cfs_loading	Reading CFS…
+CFS недоступен: %1$s	cfs_unavailable_reason	CFS unavailable: %1$s
+CFS не подключён	cfs_not_connected	CFS is not connected
+Обновить	refresh	Refresh
+влажность %.0f%%	humidity_fmt	humidity %.0f%%
+Держатель катушки	spool_holder	Spool holder
+Внешняя	external	External
+Нажмите на слот, чтобы поменять пластик или цвет.	cfs_tap_to_edit	Tap a slot to change its filament or color.
+CFS %1$s · слот %2$s	cfs_box_slot	CFS %1$s · slot %2$s
+Производитель	vendor	Vendor
+Тип	type	Type
+Пластик	filament	Filament
+Цвет	color	Color
+Мин. °C	min_temp	Min °C
+Макс. °C	max_temp	Max °C
+★ — ваши пластики из orca-sync (сервис material-sync на принтере).	synced_filaments_hint	★ — your filaments from orca-sync (material-sync service on the printer).
+Слот пуст: принтер может не сохранить данные, пока катушка не вставлена.	slot_empty_hint	The slot is empty: the printer may not keep the data until a spool is inserted.
+Изменить	edit	Edit
+Цвет %1$s	color_n	Color %1$s
+Катушка не выбрана	no_spool	No spool selected
+нажмите, чтобы выбрать из CFS	tap_to_pick_cfs	tap to choose from CFS
+Пресет пластика подставится по катушке; его можно поменять ниже. ✎ — изменить пластик в слоте.	cfs_picker_hint	The filament preset follows the spool; you can change it below. ✎ — edit the slot's filament.
+Закрыть	close	Close
+Не назначать	unassign	Don't assign
+пусто	empty	empty
+уже выбрана	already_used	already used
+%1$s мин %2$s с	duration_min_s	%1$s min %2$s s
+Уст.	set	Set
+Выкл	off	Off
+Все сообщения	all_messages	All messages
+Очистить	clear	Clear
+G-code команда	gcode_command	G-code command
+Отправить	send	Send
+Нагрев	heating	Heating
+Всё выкл	all_off	All off
+Сопло	nozzle	Nozzle
+Стол	bed	Bed
+Вентиляторы	fans	Fans
+Обдув модели	fan_part	Part cooling
+Боковой (AUX)	fan_aux	Side (AUX)
+Камерный	fan_chamber	Chamber
+Подсветка	lighting	Lighting
+Свет в камере	chamber_light	Chamber light
+Перемещение	movement	Movement
+Во время печати перемещение недоступно	move_blocked	Movement is disabled while printing
+Оси не запаркованы (%1$s) — сначала «Парковка всех»	not_homed	Axes are not homed (%1$s) — use “Home all” first
+%1$s мм	mm_fmt	%1$s mm
+Домой XY	home_xy	Home XY
+Z+ опускает стол.	z_hint	Z+ lowers the bed.
+Парковка всех	home_all	Home all
+Парковка Z	home_z	Home Z
+Моторы выкл	motors_off	Motors off
+На принтере задано сопло %.1f мм. Поменяли сопло — укажите новый диаметр.	nozzle_current	The printer is set to a %.1f mm nozzle. Changed the nozzle? Set the new diameter.
+Диаметр сопла неизвестен	nozzle_unknown	Nozzle diameter unknown
+%.1f мм	mm_1f	%.1f mm
+Во время печати менять нельзя	no_change_while_printing	Can't be changed while printing
+Катушки	spools	Spools
+Экструдер	extruder	Extruder
+Сопло должно быть нагрето (обычно ≥ 170°)	extruder_hint	The nozzle must be hot (usually ≥ 170°)
+Выдавить	extrude	Extrude
+Втянуть	retract	Retract
+Сопло %.1f мм	nozzle_mm	%.1f mm nozzle
+Принтер запомнит новый диаметр (SET_NOZZLE_DIAMETER). Экран принтера будет предупреждать 	nozzle_confirm_1	The printer will remember the new diameter (SET_NOZZLE_DIAMETER). The printer screen will warn 
+о файлах, нарезанных под другое сопло, а слайсер приложения выберет пресет принтера для %.1f мм.	nozzle_confirm_2	about files sliced for another nozzle, and the app's slicer will pick the printer preset for %.1f mm.
+Задать	apply	Set
+Прошло	elapsed	Elapsed
+Осталось	remaining	Remaining
+Слой	layer	Layer
+Далее	resume_short	Resume
+Стоп	stop	Stop
+Температуры	temperatures	Temperatures
+Скорость и поток	speed_and_flow	Speed and flow
+Скорость	speed	Speed
+Поток	flow	Flow
+Остановить печать?	stop_print_q	Stop the print?
+Текущее задание будет отменено, продолжить его будет нельзя.	stop_print_desc	The current job will be cancelled and can't be resumed.
+Остановить	stop_action	Stop
+Что делать	what_to_do	What to do
+Код ошибки на экране принтера: %1$s	fault_code	Error code on the printer screen: %1$s
+Скрыть	hide	Hide
+Файлов: %1$s	files_count	Files: %1$s
+Список не получен	files_no_list	No list received
+ Обновить	refresh_spaced	 Refresh
+Нажмите «Обновить», чтобы запросить список файлов с принтера.\n	files_hint_1	Tap “Refresh” to request the file list from the printer.\n
+Если список не приходит, проверьте ответ принтера во вкладке «Консоль».	files_hint_2	If the list doesn't arrive, check the printer's reply in the Console tab.
+На принтере нет G-code файлов.	files_empty	There are no G-code files on the printer.
+Начать печать?	start_print_q	Start printing?
+Принтер сейчас печатает!	printer_busy	The printer is printing right now!
+Убедитесь, что стол чистый.	bed_clear	Make sure the bed is clear.
+%.1f МБ	size_mb	%.1f MB
+%.0f КБ	size_kb	%.0f KB
+%1$s Б	size_b	%1$s B
+%.1f × %.1f × %.1f мм · %,d треуг.	mesh_info	%.1f × %.1f × %.1f mm · %,d triangles
+%,d отрезков	segments_info	%,d segments
+Предпросмотр G-code	gcode_preview	G-code preview
+Модель	model	Model
+Загрузка траекторий…	loading_toolpaths	Loading toolpaths…
+Загрузка модели…	loading_model	Loading model…
+Не удалось загрузить предпросмотр: %1$s	preview_failed	Couldn't load the preview: %1$s
+1 палец — вращение · щипок — масштаб · 2 пальца — сдвиг	viewer_hint	1 finger — rotate · pinch — zoom · 2 fingers — pan
+Слой %1$s из %2$s · Z %.2f мм	layer_of_z	Layer %1$s of %2$s · Z %3$.2f mm
+Типы линий	line_types	Line types
+Цвета (%1$s)	colors_n	Colors (%1$s)
+Время	time	Time
+%1$s г	grams	%1$s g
+Слоёв	layers	Layers
+✓ Печать запущена	print_started_check	✓ Print started
+На принтер	to_printer	Upload
+Начать печать	start_print	Start print
+Принтер не подключён	printer_not_connected	Printer is not connected
+%1$s\n\nG-code будет загружен на принтер и печать стартует сразу. Убедитесь, что стол чистый.	start_print_desc	%1$s\n\nThe G-code will be uploaded and the print will start right away. Make sure the bed is clear.
+Назад	back	Back
+Поиск или ссылка на модель	mw_search_hint	Search or paste a model link
+Найти	find	Find
+Найдено: %1$s	found_n	Found: %1$s
+Ещё	more	More
+Аккаунт Bambu: %1$s	bambu_account	Bambu account: %1$s
+Выйти	log_out	Log out
+Для скачивания моделей нужен вход в аккаунт Bambu	bambu_login_needed	Downloading models requires a Bambu account
+Войти	log_in	Log in
+Почта	email	Email
+Код из письма	email_code	Code from the email
+Пароль	password	Password
+…или токен (cookie token с makerworld.com)	bambu_token_hint	…or a token (the “token” cookie from makerworld.com)
+Сохранить токен	save_token	Save token
+Профиль печати — из него берутся расстановка и цвета; настройки печати будут ваши.	mw_profile_hint	Print profile — its arrangement and colors are used; print settings stay yours.
+Профиль %1$s	profile_n	Profile %1$s
+столов: %1$s	plates_n	plates: %1$s
+цветов: %1$s	colors_count	colors: %1$s
+Импортировать в слайсер	import_to_slicer	Import into the slicer
+Войдите в аккаунт Bambu, чтобы скачать	bambu_login_to_download	Log in to your Bambu account to download
+Проверьте адрес сервера слайсера в настройках (⚙) и что сервер запущен.	slicer_check_url	Check the slicer server URL in settings (⚙) and that the server is running.
+Повторить	retry	Retry
+Файл	file	File
+Загрузка на слайсер… %1$s%	uploading_pct	Uploading to the slicer… %1$s%%
+файл	file_lower	file
+%1$s цвета	n_colors	%1$s colors
+%1$s стола	n_plates	%1$s plates
+Все	all	All
+Стол %1$s	plate_n	Plate %1$s
+Выберите STL / 3MF / STEP на телефоне, модель с MakerWorld или из недавних. 	slicer_empty_1	Pick an STL / 3MF / STEP on the phone, a MakerWorld model or a recent one. 
+Файлы можно отправлять сюда и через «Поделиться».	slicer_empty_2	You can also send files here with “Share”.
+Недавние	recent	Recent
+Пресеты orca-sync: %1$s	orca_sync_presets	orca-sync presets: %1$s
+orca-sync: %1$s	orca_sync_status	orca-sync: %1$s
+Обновить пресеты	refresh_presets	Refresh presets
+Принтер	printer	Printer
+Пресет под сопло %.1f мм, а на принтере задано %.1f мм	nozzle_mismatch	The preset is for a %.1f mm nozzle, but the printer is set to %.1f mm
+Процесс	process	Process
+Цвета и катушки CFS	colors_and_spools	Colors and CFS spools
+Катушка CFS	cfs_spool	CFS spool
+Обновить CFS	refresh_cfs	Refresh CFS
+В CFS нет катушек — печать пойдёт по порядку слотов.	cfs_no_spools	No spools in CFS — slots will be used in order.
+Профиль пластика %1$s	filament_profile_n	Filament profile %1$s
+Профиль пластика	filament_profile	Filament profile
+Авторасстановка на столе	auto_arrange	Auto-arrange on the bed
+Модель встанет в центр стола %1$s×%2$s	auto_arrange_desc	The model will be centered on the %1$s×%2$s bed
+Нарезать	slice	Slice
+В очереди%1$s…	queued	Queued%1$s…
+OrcaSlicer режет…	slicing	OrcaSlicer is slicing…
+Готово за %1$s с · %2$s	sliced_in	Done in %1$s s · %2$s
+История	history	History
+печать	printing_lower	printing
+на принтере	on_printer	on the printer
+Катушка для цвета %1$s	spool_for_color	Spool for color %1$s
+Катушка для печати	spool_for_print	Spool for the print
+✓ Отправлено, печать запущена	sent_and_started	✓ Sent, print started
+✓ Загружено на принтер	uploaded_check	✓ Uploaded to the printer
+Не удалось отправить: %1$s	send_failed	Couldn't send: %1$s
+Предпросмотр	preview	Preview
+Печать…	printing_ellipsis	Print…
+Печать (принтер не подключён)	print_not_connected	Print (printer not connected)
+Поиск	search	Search
+★ — ваши пресеты из orca-sync	synced_presets_hint	★ — your presets from orca-sync
+д	unit_day	d
+ч	unit_hour	h
+мин	unit_min	min
+с	unit_sec	s
+Таймлапсов: %1$s	timelapses_count	Timelapses: %1$s
+Не удалось получить список: %1$s	list_failed	Couldn't get the list: %1$s
+Таймлапсов нет. Включите таймлапс на экране принтера перед печатью.	timelapses_empty	No timelapses. Enable timelapse on the printer screen before printing.
+%1$s с	seconds_n	%1$s s
+Печать %1$s · %2$s	timelapse_meta	Print %1$s · %2$s
+Скачать	download	Download
+Загрузка видео… %1$s%	video_loading_pct	Loading video… %1$s%%
+Не удалось загрузить видео: %1$s	video_failed	Couldn't load the video: %1$s
+Прочее	feat_other	Other
+Внешняя стенка	feat_outer_wall	Outer wall
+Внутренняя стенка	feat_inner_wall	Inner wall
+Нависание	feat_overhang	Overhang
+Заполнение	feat_infill	Sparse infill
+Сплошное заполнение	feat_solid_infill	Solid infill
+Верх	feat_top	Top surface
+Низ	feat_bottom	Bottom surface
+Мост	feat_bridge	Bridge
+Щели	feat_gap	Gap fill
+Поддержка	feat_support	Support
+Интерфейс поддержки	feat_support_iface	Support interface
+Кайма	feat_skirt	Skirt / brim
+Разглаживание	feat_ironing	Ironing
+Башня	feat_tower	Prime tower
+Держатель	holder	Holder
+нет	none	none
+токен сохранён	token_saved	token saved
+ошибка	error_lower	error
