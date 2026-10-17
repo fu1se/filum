@@ -9,9 +9,9 @@ prints, straight from the phone.
 
 [Русская версия](README.ru.md)
 
-| Home | Control | Slicer | Notifications |
-|---|---|---|---|
-| ![Home](docs/screenshots/home.png) | ![Control](docs/screenshots/control.png) | ![Slicer](docs/screenshots/slicer.png) | ![Error](docs/screenshots/error.png) |
+| Home | Control | Slicer | G-code preview | Error explained |
+|---|---|---|---|---|
+| ![Home](docs/screenshots/home.png) | ![Control](docs/screenshots/control.png) | ![Slicer](docs/screenshots/slicer.png) | ![Preview](docs/screenshots/preview.png) | ![Error](docs/screenshots/error.png) |
 
 ## Features
 

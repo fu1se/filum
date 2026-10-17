@@ -2,7 +2,7 @@
 # Uses the prebuilt image; nothing has to be copied to the NAS.
 services:
   filum-slicer:
-    image: ghcr.io/OWNER/filum-slicer:latest
+    image: ghcr.io/fu1se/filum-slicer:latest
     restart: unless-stopped
     ports:
       - "8090:8090"

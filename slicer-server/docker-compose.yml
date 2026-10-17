@@ -6,7 +6,7 @@
 services:
   filum-slicer:
     build: .
-    image: ghcr.io/OWNER/filum-slicer:latest
+    image: ghcr.io/fu1se/filum-slicer:latest
     container_name: filum-slicer
     restart: unless-stopped
     ports:

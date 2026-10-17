@@ -29,7 +29,7 @@ browser.
 ### Docker Compose (any Linux)
 
 ```sh
-git clone https://github.com/OWNER/filum.git
+git clone https://github.com/fu1se/filum.git
 cd filum/slicer-server
 docker compose up -d --build      # first build downloads OrcaSlicer, ~5 minutes
 ```
@@ -38,14 +38,14 @@ Open `http://<server-ip>:8090` in a browser to check it. Then enter the same add
 server URL.
 
 To use the prebuilt image instead of building it, delete the `build: .` line in `docker-compose.yml` and run
-`docker compose up -d`. Images are published to `ghcr.io/OWNER/filum-slicer`.
+`docker compose up -d`. Images are published to `ghcr.io/fu1se/filum-slicer`.
 
 ### Plain `docker run`
 
 ```sh
 docker run -d --name filum-slicer --restart unless-stopped \
   -p 8090:8090 -v filum-slicer-data:/data \
-  ghcr.io/OWNER/filum-slicer:latest
+  ghcr.io/fu1se/filum-slicer:latest
 ```
 
 ### TrueNAS SCALE
@@ -65,7 +65,7 @@ docker run -d --name filum-slicer --restart unless-stopped \
 
 ### Unraid, Portainer, Synology and others
 
-Use the image `ghcr.io/OWNER/filum-slicer:latest` with:
+Use the image `ghcr.io/fu1se/filum-slicer:latest` with:
 - port `8090`;
 - a persistent volume mounted at `/data`;
 - the environment variables below.
