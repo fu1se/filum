@@ -48,7 +48,7 @@ The app asks the printer which objects and G-code commands it has, and shows onl
 | Lighting | `SET_PIN PIN=LED` |
 | Movement | Jog X/Y/Z, home, motors off. Blocked while printing |
 | Nozzle | Sets the nozzle diameter on the printer (`SET_NOZZLE_DIAMETER`). The slicer then picks the matching printer preset |
-| Spools | CFS boxes and the external spool holder. Tap a slot to choose the vendor, type and filament from the printer's library, plus the color, temperatures and pressure advance |
+| Spools | CFS boxes and the external spool holder. Tap a slot to choose the vendor, type and filament from the printer's library, plus the color, temperatures and pressure advance. **RFID tag** writes a spool tag the CFS reads by itself; see [rfid.md](rfid.md) |
 | Extruder | Extrude or retract 5, 10 or 50 mm. The nozzle must be hot |
 
 Filaments marked ★ in the slot editor come from your orca-sync presets, through

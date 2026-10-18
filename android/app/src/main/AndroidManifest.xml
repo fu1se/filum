@@ -2,6 +2,9 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
 
     <uses-permission android:name="android.permission.INTERNET" />
+    <!-- RFID-метки катушек (MIFARE Classic); без NFC приложение тоже ставится -->
+    <uses-permission android:name="android.permission.NFC" />
+    <uses-feature android:name="android.hardware.nfc" android:required="false" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
     <!-- Уведомления о печати: фоновый сервис с подключением к принтеру -->
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />

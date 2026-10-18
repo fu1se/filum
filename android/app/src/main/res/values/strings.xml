@@ -459,4 +459,36 @@
     <string name="chamber">Chamber</string>
     <string name="action_print">Print</string>
     <string name="status_paused">Paused</string>
+    <!-- RFID-метки катушек -->
+    <string name="rfid_title">Spool RFID tag</string>
+    <string name="rfid_button">RFID tag</string>
+    <string name="rfid_weight">Spool weight</string>
+    <string name="rfid_hint">Use a MIFARE Classic 1K tag (13.56 MHz; stickers, cards or key fobs). NTAG stickers won\'t work. Stick it on the side of the spool so it passes the CFS reader; the CFS fills in the slot when the spool is loaded.</string>
+    <string name="rfid_write">Write tag</string>
+    <string name="rfid_read">Read tag</string>
+    <string name="rfid_erase">Erase tag</string>
+    <string name="rfid_hold_write">Hold the tag to the back of the phone to write %1$s…</string>
+    <string name="rfid_hold_read">Hold the tag to the back of the phone…</string>
+    <string name="rfid_hold_erase">Hold the tag to the back of the phone to erase it…</string>
+    <string name="rfid_written">Tag written: %1$s</string>
+    <string name="rfid_written_hint">Stick it on the spool and load the spool into the CFS. The printer reads the material and color from the tag. The material must be in the printer\'s library; filaments added by material-sync work too.</string>
+    <string name="rfid_erased">Tag erased: it is blank again with default keys.</string>
+    <string name="rfid_blank">Blank tag.</string>
+    <string name="rfid_other">The tag isn\'t a spool tag.</string>
+    <string name="rfid_unknown_material">Material %1$s</string>
+    <string name="rfid_unknown_hint">This printer\'s library has no material with this id: the CFS will show the slot as unknown.</string>
+    <string name="rfid_details">Material id %1$s · vendor %2$s · serial %3$s</string>
+    <string name="rfid_use">Use these settings</string>
+    <string name="rfid_back">Back</string>
+    <string name="rfid_another">Another tag</string>
+    <string name="rfid_open_settings">Open NFC settings</string>
+    <string name="rfid_no_nfc">This phone has no NFC.</string>
+    <string name="rfid_nfc_off">NFC is off.</string>
+    <string name="rfid_err_locked">The tag is protected with an unknown key. Only blank tags and tags written by Creality or Filum can be used.</string>
+    <string name="rfid_err_verify">The data read back from the tag doesn\'t match. Try again and hold the tag still.</string>
+    <string name="rfid_err_phone_no_classic">This is a MIFARE Classic tag, but this phone\'s NFC chip doesn\'t support MIFARE Classic (common on Pixel and some Samsung phones). Use another phone or a USB reader.</string>
+    <string name="rfid_err_wrong_type">This is not a MIFARE Classic tag. The CFS reads only MIFARE Classic 1K.</string>
+    <string name="rfid_err_io">Lost contact with the tag (%1$s). Hold it still and try again.</string>
+    <string name="kg_fmt">%1$d kg</string>
+    <string name="g_fmt">%1$d g</string>
 </resources>

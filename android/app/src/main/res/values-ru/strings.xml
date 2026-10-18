@@ -458,4 +458,36 @@
     <string name="chamber">Камера</string>
     <string name="action_print">Печать</string>
     <string name="status_paused">Пауза</string>
+    <!-- RFID-метки катушек -->
+    <string name="rfid_title">RFID-метка катушки</string>
+    <string name="rfid_button">RFID-метка</string>
+    <string name="rfid_weight">Вес катушки</string>
+    <string name="rfid_hint">Нужна метка MIFARE Classic 1K (13,56 МГц: наклейки, карты, брелоки). Наклейки NTAG не подойдут. Клейте на бок катушки, чтобы метка проходила мимо считывателя CFS: при загрузке катушки CFS сам заполнит слот.</string>
+    <string name="rfid_write">Записать</string>
+    <string name="rfid_read">Прочитать</string>
+    <string name="rfid_erase">Стереть</string>
+    <string name="rfid_hold_write">Приложите метку к задней стороне телефона, чтобы записать %1$s…</string>
+    <string name="rfid_hold_read">Приложите метку к задней стороне телефона…</string>
+    <string name="rfid_hold_erase">Приложите метку к задней стороне телефона, чтобы стереть её…</string>
+    <string name="rfid_written">Метка записана: %1$s</string>
+    <string name="rfid_written_hint">Наклейте её на катушку и загрузите катушку в CFS — принтер возьмёт пластик и цвет из метки. Пластик должен быть в библиотеке принтера; пластики, добавленные material-sync, тоже подходят.</string>
+    <string name="rfid_erased">Метка стёрта: она снова чистая, с заводскими ключами.</string>
+    <string name="rfid_blank">Чистая метка.</string>
+    <string name="rfid_other">Это не метка катушки.</string>
+    <string name="rfid_unknown_material">Пластик %1$s</string>
+    <string name="rfid_unknown_hint">В библиотеке этого принтера нет пластика с таким id: CFS покажет слот как неизвестный.</string>
+    <string name="rfid_details">id пластика %1$s · производитель %2$s · серийный %3$s</string>
+    <string name="rfid_use">Взять эти настройки</string>
+    <string name="rfid_back">Назад</string>
+    <string name="rfid_another">Ещё метку</string>
+    <string name="rfid_open_settings">Настройки NFC</string>
+    <string name="rfid_no_nfc">В телефоне нет NFC.</string>
+    <string name="rfid_nfc_off">NFC выключен.</string>
+    <string name="rfid_err_locked">Метка защищена неизвестным ключом. Подходят только чистые метки и метки, записанные Creality или Filum.</string>
+    <string name="rfid_err_verify">Данные на метке не совпали с записанными. Попробуйте ещё раз и держите метку неподвижно.</string>
+    <string name="rfid_err_phone_no_classic">Это метка MIFARE Classic, но NFC-чип телефона её не поддерживает (так у Pixel и части Samsung). Нужен другой телефон или USB-считыватель.</string>
+    <string name="rfid_err_wrong_type">Это не MIFARE Classic. CFS читает только MIFARE Classic 1K.</string>
+    <string name="rfid_err_io">Связь с меткой прервалась (%1$s). Держите её неподвижно и попробуйте снова.</string>
+    <string name="kg_fmt">%1$d кг</string>
+    <string name="g_fmt">%1$d г</string>
 </resources>

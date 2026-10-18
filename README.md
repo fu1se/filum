@@ -24,6 +24,8 @@ prints, straight from the phone.
 - **CFS (Creality Filament System).**
   - Boxes and spools with real colors, remaining filament and humidity.
   - Edit any slot or the external spool holder using the printer's own material library.
+  - **RFID tags.** Write MIFARE Classic tags for any spool, so the CFS recognizes it like a Creality spool
+    ([how](docs/rfid.md)).
 - **Printer errors explained.** Filament runout, CFS jams, AI camera detections, heater faults and more come with
   "what happened / what to do". Creality reports many of these as a plain pause, so other apps just say "Paused".
 - **Notifications.** A progress notification while printing, plus alerts when a print finishes and when an error
@@ -94,6 +96,7 @@ please open an issue.
 - [Slicer server](docs/slicer-server.md): installation, configuration, API
 - [How Creality OS works](docs/creality-protocol.md): Moonraker and the Creality WebSocket (:9999), CFS, error
   codes. Useful if you build your own tools.
+- [RFID tags for spools](docs/rfid.md): writing tags, tag format
 - [material-sync](printer/material-sync/README.md): your filaments in the printer's library
 - [Building and contributing](docs/building.md)
 - [Troubleshooting](docs/troubleshooting.md)

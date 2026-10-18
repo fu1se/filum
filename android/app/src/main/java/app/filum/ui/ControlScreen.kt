@@ -19,6 +19,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowDownward
 import androidx.compose.material.icons.filled.ArrowUpward
 import androidx.compose.material.icons.filled.Home
+import androidx.compose.material.icons.filled.Nfc
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material3.FilledTonalButton
@@ -61,6 +62,7 @@ private val presets = listOf(
 fun ControlScreen(state: PrinterState, connected: Boolean, client: PrinterClient, slicerVm: SlicerViewModel) {
     val slicerUi by slicerVm.ui.collectAsStateWithLifecycle()
     var editSlot by remember { mutableStateOf<CfsSlot?>(null) }
+    var tagFor by remember { mutableStateOf<TagPrefill?>(null) }
     var nozzleAsk by remember { mutableStateOf<Double?>(null) }
     LaunchedEffect(Unit) { if (slicerUi.cfs == null) slicerVm.loadCfs() }
     val context = androidx.compose.ui.platform.LocalContext.current
@@ -183,6 +185,10 @@ fun ControlScreen(state: PrinterState, connected: Boolean, client: PrinterClient
 
         if (caps.cfs) Section(tr(R.string.spools)) {
             CfsBoxes(slicerUi.cfs, slicerUi.rack, slicerUi.cfsError, onRefresh = { slicerVm.loadCfs() }, onEdit = { editSlot = it })
+            OutlinedButton(onClick = { tagFor = TagPrefill(null, null) }) {
+                Icon(Icons.Default.Nfc, null, Modifier.size(18.dp))
+                Text(tr(R.string.rfid_button), Modifier.padding(start = 8.dp))
+            }
         }
 
         Section(tr(R.string.extruder)) {
@@ -228,6 +234,13 @@ fun ControlScreen(state: PrinterState, connected: Boolean, client: PrinterClient
             onLoadLibrary = slicerVm::loadLibrary,
             onSave = { m, c, mn, mx, pa -> slicerVm.saveSlot(s, m, c, mn, mx, pa) { editSlot = null } },
             onDismiss = { editSlot = null },
+            onWriteTag = { m, c -> editSlot = null; tagFor = TagPrefill(m.id, c) },
+        )
+    }
+    tagFor?.let { p ->
+        SpoolTagDialog(
+            library = slicerUi.library, onLoadLibrary = slicerVm::loadLibrary, onDismiss = { tagFor = null },
+            initialMaterialId = p.materialId, initialColor = p.color,
         )
     }
 }
@@ -243,3 +256,5 @@ private fun JogButton(icon: ImageVector, label: String, enabled: Boolean, onClic
         }
     }
 }
+
+private data class TagPrefill(val materialId: String?, val color: String?)

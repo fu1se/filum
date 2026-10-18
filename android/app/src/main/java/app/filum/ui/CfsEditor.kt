@@ -126,6 +126,7 @@ fun CfsEditDialog(
     onLoadLibrary: () -> Unit,
     onSave: (MaterialDef, String, Int, Int, Double) -> Unit,
     onDismiss: () -> Unit,
+    onWriteTag: ((MaterialDef, String) -> Unit)? = null,
 ) {
     LaunchedEffect(Unit) { onLoadLibrary() }
     val initial = remember(library) {
@@ -137,11 +138,8 @@ fun CfsEditDialog(
                 ?: lib.firstOrNull()
         }
     }
-    var brand by remember(initial) { mutableStateOf(initial?.brand) }
-    var type by remember(initial) { mutableStateOf(initial?.type) }
     var mat by remember(initial) { mutableStateOf(initial) }
     var color by remember { mutableStateOf(slot.color ?: "#FFFFFF") }
-    var hex by remember { mutableStateOf(color.removePrefix("#")) }
     var minT by remember(initial) { mutableStateOf(((if (slot.name == initial?.name) slot.minTemp else null) ?: initial?.minTemp ?: 0).toString()) }
     var maxT by remember(initial) { mutableStateOf(((if (slot.name == initial?.name) slot.maxTemp else null) ?: initial?.maxTemp ?: 0).toString()) }
     var pa by remember(initial) {
@@ -180,62 +178,7 @@ fun CfsEditDialog(
                 return@AlertDialog
             }
             Column(Modifier.verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                // ваши производители из orca-sync — первыми
-                val syncedBrands = library.filter { it.synced }.map { it.brand }.toSet()
-                val brands = library.map { it.brand }.distinct()
-                    .sortedWith(compareBy({ b -> if (b in syncedBrands) -1 else brandOrder.indexOf(b).let { if (it < 0) 99 else it } }, { it }))
-                Label(tr(R.string.vendor))
-                FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                    brands.forEach { b ->
-                        Pill(if (b in syncedBrands) "★ $b" else b, b == brand) {
-                            brand = b
-                            val types = library.filter { it.brand == b }.map { it.type }
-                            if (type !in types) type = types.firstOrNull()
-                            library.firstOrNull { it.brand == b && it.type == type }?.let(::choose)
-                        }
-                    }
-                }
-                Label(tr(R.string.type))
-                FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                    library.filter { it.brand == brand }.map { it.type }.distinct().forEach { t ->
-                        Pill(t, t == type) {
-                            type = t
-                            library.firstOrNull { it.brand == brand && it.type == t }?.let(::choose)
-                        }
-                    }
-                }
-                Label(tr(R.string.filament))
-                FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                    library.filter { it.brand == brand && it.type == type }.forEach { m ->
-                        Pill(if (m.synced) "★ ${m.name}" else m.name, m.id == mat?.id) { choose(m) }
-                    }
-                }
-                Label(tr(R.string.color))
-                val palette = (mat?.colors?.takeIf { it.size >= 4 } ?: basicColors).let { p ->
-                    if (p.any { it.equals(color, true) }) p else listOf(color.uppercase()) + p
-                }
-                FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                    palette.forEach { c ->
-                        val sel = c.equals(color, true)
-                        Box(
-                            Modifier.size(34.dp).clip(RoundedCornerShape(50))
-                                .background(parseHexColor(c) ?: Color.Gray)
-                                .border(if (sel) 3.dp else 1.dp, if (sel) Accent else Color(0x55FFFFFF), RoundedCornerShape(50))
-                                .clickable { color = c.uppercase(); hex = c.removePrefix("#").uppercase() },
-                        )
-                    }
-                }
-                OutlinedTextField(
-                    value = hex,
-                    onValueChange = { v ->
-                        hex = v.removePrefix("#").uppercase().filter { it.isDigit() || it in 'A'..'F' }.take(6)
-                        if (hex.length == 6) color = "#$hex"
-                    },
-                    label = { Text("HEX") },
-                    prefix = { Text("#") },
-                    singleLine = true,
-                    modifier = Modifier.fillMaxWidth(),
-                )
+                MaterialColorPicker(library, mat, ::choose, color) { color = it }
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     NumField(tr(R.string.min_temp), minT, Modifier.weight(1f)) { minT = it }
                     NumField(tr(R.string.max_temp), maxT, Modifier.weight(1f)) { maxT = it }
@@ -256,8 +199,89 @@ fun CfsEditDialog(
                 else Text(tr(R.string.save))
             }
         },
-        dismissButton = { TextButton(onClick = onDismiss, enabled = !saving) { Text(tr(R.string.cancel)) } },
+        dismissButton = {
+            Row {
+                if (onWriteTag != null) TextButton(onClick = { onWriteTag(mat!!, color) }, enabled = mat != null && !saving) {
+                    Text(tr(R.string.rfid_button))
+                }
+                TextButton(onClick = onDismiss, enabled = !saving) { Text(tr(R.string.cancel)) }
+            }
+        },
     )
+}
+
+/** Производитель → тип → пластик из библиотеки принтера и цвет. */
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+fun MaterialColorPicker(
+    library: List<MaterialDef>,
+    mat: MaterialDef?,
+    onMaterial: (MaterialDef) -> Unit,
+    color: String,
+    onColor: (String) -> Unit,
+) {
+    var brand by remember { mutableStateOf(mat?.brand) }
+    var type by remember { mutableStateOf(mat?.type) }
+    var hex by remember { mutableStateOf(color.removePrefix("#")) }
+    val choose = onMaterial
+    Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+        // ваши производители из orca-sync — первыми
+        val syncedBrands = library.filter { it.synced }.map { it.brand }.toSet()
+        val brands = library.map { it.brand }.distinct()
+            .sortedWith(compareBy({ b -> if (b in syncedBrands) -1 else brandOrder.indexOf(b).let { if (it < 0) 99 else it } }, { it }))
+        Label(tr(R.string.vendor))
+        FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+            brands.forEach { b ->
+                Pill(if (b in syncedBrands) "★ $b" else b, b == brand) {
+                    brand = b
+                    val types = library.filter { it.brand == b }.map { it.type }
+                    if (type !in types) type = types.firstOrNull()
+                    library.firstOrNull { it.brand == b && it.type == type }?.let(choose)
+                }
+            }
+        }
+        Label(tr(R.string.type))
+        FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+            library.filter { it.brand == brand }.map { it.type }.distinct().forEach { t ->
+                Pill(t, t == type) {
+                    type = t
+                    library.firstOrNull { it.brand == brand && it.type == t }?.let(choose)
+                }
+            }
+        }
+        Label(tr(R.string.filament))
+        FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+            library.filter { it.brand == brand && it.type == type }.forEach { m ->
+                Pill(if (m.synced) "★ ${m.name}" else m.name, m.id == mat?.id) { choose(m) }
+            }
+        }
+        Label(tr(R.string.color))
+        val palette = (mat?.colors?.takeIf { it.size >= 4 } ?: basicColors).let { p ->
+            if (p.any { it.equals(color, true) }) p else listOf(color.uppercase()) + p
+        }
+        FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+            palette.forEach { c ->
+                val sel = c.equals(color, true)
+                Box(
+                    Modifier.size(34.dp).clip(RoundedCornerShape(50))
+                        .background(parseHexColor(c) ?: Color.Gray)
+                        .border(if (sel) 3.dp else 1.dp, if (sel) Accent else Color(0x55FFFFFF), RoundedCornerShape(50))
+                        .clickable { onColor(c.uppercase()); hex = c.removePrefix("#").uppercase() },
+                )
+            }
+        }
+        OutlinedTextField(
+            value = hex,
+            onValueChange = { v ->
+                hex = v.removePrefix("#").uppercase().filter { it.isDigit() || it in 'A'..'F' }.take(6)
+                if (hex.length == 6) onColor("#$hex")
+            },
+            label = { Text("HEX") },
+            prefix = { Text("#") },
+            singleLine = true,
+            modifier = Modifier.fillMaxWidth(),
+        )
+    }
 }
 
 @Composable
