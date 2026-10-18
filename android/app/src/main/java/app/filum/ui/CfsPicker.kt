@@ -103,7 +103,7 @@ fun CfsAssignRow(
                 spool.remain?.let { r ->
                     Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(top = 4.dp)) {
                         LinearProgressIndicator(progress = { r / 100f }, modifier = Modifier.weight(1f).height(4.dp),
-                            color = if (r < 15) MaterialTheme.colorScheme.error else Accent)
+                            color = if (r < 15) MaterialTheme.colorScheme.error else Accent, trackColor = TrackColor)
                         Text("  $r%", style = MaterialTheme.typography.labelSmall)
                     }
                 }

@@ -133,7 +133,7 @@ fun SlicerScreen(vm: SlicerViewModel, printerConnected: Boolean) {
             }
             ui.uploading?.let {
                 Text(tr(R.string.uploading_pct, (it * 100).toInt()), style = MaterialTheme.typography.bodySmall)
-                LinearProgressIndicator(progress = { it }, modifier = Modifier.fillMaxWidth())
+                LinearProgressIndicator(progress = { it }, modifier = Modifier.fillMaxWidth(), trackColor = TrackColor)
             }
             ui.model?.let { m ->
                 Row(verticalAlignment = Alignment.CenterVertically) {
@@ -257,7 +257,7 @@ fun SlicerScreen(vm: SlicerViewModel, printerConnected: Boolean) {
                     "queued", "slicing" -> {
                         Text(if (j.state == "queued") tr(R.string.queued, if (j.queuePosition > 0) " (${j.queuePosition})" else "")
                              else tr(R.string.slicing))
-                        LinearProgressIndicator(Modifier.fillMaxWidth())
+                        LinearProgressIndicator(Modifier.fillMaxWidth(), trackColor = TrackColor)
                     }
                     "error" -> Text(tr(R.string.log_error, j.error), color = MaterialTheme.colorScheme.error)
                     else -> Text(

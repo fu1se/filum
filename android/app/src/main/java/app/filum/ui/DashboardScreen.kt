@@ -4,6 +4,7 @@ import app.filum.tr
 import app.filum.R
 import app.filum.data.ActiveFault
 import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -114,7 +115,8 @@ fun DashboardScreen(
             state.fileName?.let { Text(it, maxLines = 2, overflow = TextOverflow.Ellipsis) }
             LinearProgressIndicator(
                 progress = { (state.progress ?: 0) / 100f },
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier.fillMaxWidth().height(6.dp),
+                trackColor = TrackColor,
             )
             Row {
                 InfoCell(tr(R.string.elapsed), fmtDuration(state.jobTimeSec), Modifier.weight(1f))

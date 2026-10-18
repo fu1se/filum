@@ -185,6 +185,7 @@ fun PreviewPanel(vm: SlicerViewModel, target: PreviewTarget, printerConnected: B
                         value = layer.toFloat(),
                         onValueChange = { layer = it.toInt() },
                         valueRange = 0f..(layers - 1).coerceAtLeast(1).toFloat(),
+                        colors = trackSliderColors(),
                     )
                     if (data.paths != null) {
                         Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {

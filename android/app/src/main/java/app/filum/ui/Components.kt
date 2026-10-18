@@ -100,6 +100,22 @@ private val LightColors = lightColorScheme(
     error = Color(0xFFBA1A1A),
 )
 
+/** Незаполненная часть ползунков и полос прогресса: должна быть заметна и на 0%. */
+val TrackColor: Color @Composable get() = MaterialTheme.colorScheme.primary.copy(alpha = 0.24f)
+
+@Composable
+fun trackSliderColors() = androidx.compose.material3.SliderDefaults.colors(
+    inactiveTrackColor = TrackColor,
+    inactiveTickColor = MaterialTheme.colorScheme.primary,
+)
+
+/** Обводка тональных кнопок: на фоне карточки их заливка почти не видна. */
+@Composable
+fun tonalBorder(enabled: Boolean) = androidx.compose.foundation.BorderStroke(
+    1.dp,
+    if (enabled) MaterialTheme.colorScheme.outline else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.12f),
+)
+
 @Composable
 fun K2Theme(dark: Boolean, content: @Composable () -> Unit) {
     val view = androidx.compose.ui.platform.LocalView.current
@@ -201,6 +217,7 @@ fun PercentSlider(
             onValueChangeFinished = { dragging = false; onCommit(local.roundToInt()) },
             valueRange = range.first.toFloat()..range.last.toFloat(),
             enabled = enabled,
+            colors = trackSliderColors(),
         )
     }
 }

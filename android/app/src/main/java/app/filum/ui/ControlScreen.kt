@@ -2,6 +2,7 @@ package app.filum.ui
 
 import app.filum.tr
 import app.filum.R
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -137,7 +138,8 @@ fun ControlScreen(state: PrinterState, connected: Boolean, client: PrinterClient
                     JogButton(Icons.Default.ArrowUpward, "Y+", canMove) { client.move('Y', step, 6000) }
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         JogButton(Icons.AutoMirrored.Filled.ArrowBack, "X−", canMove) { client.move('X', -step, 6000) }
-                        FilledTonalIconButton(onClick = { client.home("X Y") }, enabled = canMove, modifier = Modifier.size(56.dp)) {
+                        FilledTonalIconButton(onClick = { client.home("X Y") }, enabled = canMove, modifier = Modifier.size(56.dp)
+                            .border(tonalBorder(canMove), androidx.compose.foundation.shape.CircleShape)) {
                             Icon(Icons.Default.Home, tr(R.string.home_xy))
                         }
                         JogButton(Icons.AutoMirrored.Filled.ArrowForward, "X+", canMove) { client.move('X', step, 6000) }
@@ -157,7 +159,7 @@ fun ControlScreen(state: PrinterState, connected: Boolean, client: PrinterClient
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
             FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                FilledTonalButton(onClick = { client.home() }, enabled = canMove) { Text(tr(R.string.home_all)) }
+                FilledTonalButton(onClick = { client.home() }, enabled = canMove, border = tonalBorder(canMove)) { Text(tr(R.string.home_all)) }
                 OutlinedButton(onClick = { client.home("Z") }, enabled = canMove) { Text(tr(R.string.home_z)) }
                 OutlinedButton(onClick = { client.motorsOff() }, enabled = canMove) { Text(tr(R.string.motors_off)) }
             }
@@ -204,7 +206,8 @@ fun ControlScreen(state: PrinterState, connected: Boolean, client: PrinterClient
                 }
             }
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                FilledTonalButton(onClick = { client.extrude(extrudeLen) }, enabled = canMove, modifier = Modifier.weight(1f)) {
+                FilledTonalButton(onClick = { client.extrude(extrudeLen) }, enabled = canMove, modifier = Modifier.weight(1f),
+                    border = tonalBorder(canMove)) {
                     Text(tr(R.string.extrude))
                 }
                 OutlinedButton(onClick = { client.extrude(-extrudeLen) }, enabled = canMove, modifier = Modifier.weight(1f)) {
@@ -248,7 +251,8 @@ fun ControlScreen(state: PrinterState, connected: Boolean, client: PrinterClient
 @Composable
 private fun JogButton(icon: ImageVector, label: String, enabled: Boolean, onClick: () -> Unit) {
     Box(Modifier.padding(2.dp)) {
-        FilledTonalIconButton(onClick = onClick, enabled = enabled, modifier = Modifier.size(56.dp)) {
+        FilledTonalIconButton(onClick = onClick, enabled = enabled, modifier = Modifier.size(56.dp)
+            .border(tonalBorder(enabled), androidx.compose.foundation.shape.CircleShape)) {
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
                 Icon(icon, label)
                 Text(label, style = MaterialTheme.typography.labelSmall)
