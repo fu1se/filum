@@ -1,7 +1,9 @@
 <resources>
-    <style name="Theme.Filum" parent="android:Theme.Material.NoActionBar">
-        <item name="android:windowBackground">#FF121212</item>
-        <item name="android:statusBarColor">#FF121212</item>
-        <item name="android:navigationBarColor">#FF121212</item>
+    <style name="Theme.Filum" parent="android:Theme.Material.Light.NoActionBar">
+        <item name="android:windowBackground">#FFF5FAF9</item>
+        <item name="android:statusBarColor">#FFF5FAF9</item>
+        <item name="android:navigationBarColor">#FFF5FAF9</item>
+        <item name="android:windowLightStatusBar">true</item>
+        <item name="android:windowLightNavigationBar">true</item>
     </style>
 </resources>

@@ -58,6 +58,10 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import app.filum.AppSettings
 import app.filum.CameraMode
+import app.filum.ThemeMode
+import androidx.compose.material3.SegmentedButton
+import androidx.compose.material3.SegmentedButtonDefaults
+import androidx.compose.material3.SingleChoiceSegmentedButtonRow
 import app.filum.PrinterViewModel
 import app.filum.SlicerViewModel
 import androidx.compose.material.icons.filled.ViewInAr
@@ -203,7 +207,7 @@ fun App(vm: PrinterViewModel, slicerVm: SlicerViewModel) {
     if (showSettings) {
         val adding = addingPrinter || settings.host.isBlank()
         SettingsDialog(
-            initial = if (addingPrinter) AppSettings(slicerUrl = settings.slicerUrl, notifications = settings.notifications) else settings,
+            initial = if (addingPrinter) AppSettings(slicerUrl = settings.slicerUrl, notifications = settings.notifications, theme = settings.theme) else settings,
             adding = adding,
             canDelete = !adding && printers.size > 1,
             canCancel = printers.isNotEmpty(),
@@ -239,6 +243,7 @@ private fun SettingsDialog(
     var camUrl by remember { mutableStateOf(initial.cameraUrl) }
     var slicerUrl by remember { mutableStateOf(initial.slicerUrl) }
     var notifications by remember { mutableStateOf(initial.notifications) }
+    var theme by remember { mutableStateOf(initial.theme) }
     val preview = AppSettings(host.trim(), mode, "").resolvedCameraUrl()
 
     AlertDialog(
@@ -307,13 +312,24 @@ private fun SettingsDialog(
                     }
                     androidx.compose.material3.Switch(checked = notifications, onCheckedChange = { notifications = it })
                 }
+                Text(tr(R.string.theme), style = MaterialTheme.typography.titleSmall)
+                SingleChoiceSegmentedButtonRow(Modifier.fillMaxWidth()) {
+                    ThemeMode.entries.forEachIndexed { i, t ->
+                        SegmentedButton(
+                            selected = theme == t,
+                            onClick = { theme = t },
+                            shape = SegmentedButtonDefaults.itemShape(i, ThemeMode.entries.size),
+                            icon = {},
+                        ) { Text(t.title, maxLines = 1) }
+                    }
+                }
             }
         },
         confirmButton = {
             TextButton(
                 onClick = {
                     onSave(AppSettings(host.trim(), mode, camUrl.trim(),
-                        slicerUrl.trim().ifBlank { SlicerViewModel.DEFAULT_SLICER_URL }, notifications, name.trim()))
+                        slicerUrl.trim().ifBlank { SlicerViewModel.DEFAULT_SLICER_URL }, notifications, name.trim(), theme))
                 },
                 enabled = host.isNotBlank(),
             ) { Text(tr(R.string.save)) }

@@ -8,6 +8,8 @@ import android.view.WindowManager
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels
+import androidx.compose.foundation.isSystemInDarkTheme
+import androidx.compose.runtime.collectAsState
 import app.filum.notify.PrintMonitorService
 import app.filum.ui.App
 import app.filum.ui.K2Theme
@@ -24,7 +26,13 @@ class MainActivity : ComponentActivity() {
         // Экран не гаснет, пока смотрим на камеру/печать
         window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
         setContent {
-            K2Theme { App(vm, slicerVm) }
+            val theme = vm.settings.collectAsState().value.theme
+            val dark = when (theme) {
+                ThemeMode.SYSTEM -> isSystemInDarkTheme()
+                ThemeMode.LIGHT -> false
+                ThemeMode.DARK -> true
+            }
+            K2Theme(dark) { App(vm, slicerVm) }
         }
         if (savedInstanceState == null) handleIntent(intent)
         startMonitor()

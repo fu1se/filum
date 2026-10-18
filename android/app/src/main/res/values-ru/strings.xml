@@ -490,4 +490,8 @@
     <string name="rfid_err_io">Связь с меткой прервалась (%1$s). Держите её неподвижно и попробуйте снова.</string>
     <string name="kg_fmt">%1$d кг</string>
     <string name="g_fmt">%1$d г</string>
+    <string name="theme">Тема</string>
+    <string name="theme_system">Системная</string>
+    <string name="theme_light">Светлая</string>
+    <string name="theme_dark">Тёмная</string>
 </resources>

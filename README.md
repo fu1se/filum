@@ -1,3 +1,5 @@
+<img src="docs/logo.svg" width="96" align="right" alt="">
+
 # Filum
 
 **Control Creality OS printers from your phone, and slice on your own server.**
@@ -34,6 +36,7 @@ prints, straight from the phone.
 - **Several printers.** Save several printers and switch between them in one tap.
 - **G-code console.**
 - **Languages:** English and Russian. Android 13+ lets you choose per app.
+- **Light and dark theme**, or follow the system (⚙ → Theme).
 
 **Slicer tab (needs Filum Slicer):**
 - Models from the phone, from "Share" in other apps, or from MakerWorld.

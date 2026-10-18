@@ -44,6 +44,7 @@ fun parseHexColor(hex: String?): Color? =
 /** Катушка: кольцо пластика цвета нити, ступица и отверстие. Пустой слот — пунктир. */
 @Composable
 fun SpoolIcon(color: Color?, size: Dp, selected: Boolean = false, empty: Boolean = false) {
+    val accent = Accent
     Canvas(Modifier.size(size)) {
         val r = this.size.minDimension / 2
         val c = Offset(this.size.width / 2, this.size.height / 2)
@@ -53,7 +54,7 @@ fun SpoolIcon(color: Color?, size: Dp, selected: Boolean = false, empty: Boolean
             drawCircle(Color(0xFF2A2F35), r * 0.32f, c)
             return@Canvas
         }
-        if (selected) drawCircle(Accent, r, c)
+        if (selected) drawCircle(accent, r, c)
         drawCircle(Color(0xFF15181C), r * (if (selected) 0.9f else 1f), c)          // щёчка катушки
         drawCircle(color, r * 0.82f, c)                                          // намотанный пластик
         // лёгкие «витки», чтобы белая и чёрная катушки читались на тёмном фоне
@@ -82,7 +83,7 @@ fun CfsAssignRow(
         if (total > 1) {
             Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.width(56.dp)) {
                 Box(Modifier.size(26.dp).clip(RoundedCornerShape(50)).background(parseHexColor(modelSlot?.color) ?: Color.Gray)
-                    .border(1.dp, Color(0x55FFFFFF), RoundedCornerShape(50)))
+                    .border(1.dp, MaterialTheme.colorScheme.outline, RoundedCornerShape(50)))
                 Text(tr(R.string.color_n, index + 1), style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant)
             }

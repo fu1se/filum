@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Значок уведомлений: силуэт 3D-принтера (рама, балка, сопло, деталь) -->
+<!-- Значок уведомлений: логотип Filum -->
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
-    android:width="24dp"
-    android:height="24dp"
-    android:viewportWidth="24"
-    android:viewportHeight="24">
-    <path
-        android:fillColor="#FFFFFFFF"
-        android:pathData="M3,2h18v20h-18zM5,4v16h14v-16zM6,6h12v2h-12zM10,8h4v2l-1,1.5h-2l-1,-1.5zM8,15h8v3h-8z" />
+    android:width="24dp" android:height="24dp"
+    android:viewportWidth="60" android:viewportHeight="60">
+    <group android:translateX="-24" android:translateY="-23">
+        <path android:strokeColor="#FFFFFFFF" android:strokeWidth="7"
+            android:strokeLineCap="round" android:strokeLineJoin="round"
+            android:pathData="M46,78 V42 a14,14 0 0 1 28,0 a8,8 0 0 1 -16,0 a3,3 0 0 1 3,-3 M34,58 H58" />
+    </group>
 </vector>

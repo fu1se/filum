@@ -265,7 +265,7 @@ fun MaterialColorPicker(
                 Box(
                     Modifier.size(34.dp).clip(RoundedCornerShape(50))
                         .background(parseHexColor(c) ?: Color.Gray)
-                        .border(if (sel) 3.dp else 1.dp, if (sel) Accent else Color(0x55FFFFFF), RoundedCornerShape(50))
+                        .border(if (sel) 3.dp else 1.dp, if (sel) Accent else MaterialTheme.colorScheme.outline, RoundedCornerShape(50))
                         .clickable { onColor(c.uppercase()); hex = c.removePrefix("#").uppercase() },
                 )
             }

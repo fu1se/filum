@@ -98,7 +98,7 @@ fun PreviewPanel(vm: SlicerViewModel, target: PreviewTarget, printerConnected: B
                     val mesh = vm.mesh(target.model.id)
                     withContext(Dispatchers.Default) {
                         val color = target.model.slots.firstOrNull()?.color
-                            ?.let { runCatching { Color(android.graphics.Color.parseColor(it.take(7))) }.getOrNull() } ?: Accent
+                            ?.let { runCatching { Color(android.graphics.Color.parseColor(it.take(7))) }.getOrNull() } ?: Color(0xFF3DD9C1)  // фон просмотра всегда тёмный
                         val recenter = !target.model.name.endsWith(".3mf", true)
                         val s = prepareMesh(mesh, bedW, bedH, recenter, color)
                         Loaded(s, null, emptyList(),

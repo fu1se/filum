@@ -31,6 +31,15 @@ enum class CameraMode(@androidx.annotation.StringRes private val titleRes: Int) 
     val title get() = tr(titleRes)
 }
 
+/** Тема оформления: как в системе, светлая или тёмная. */
+enum class ThemeMode(@androidx.annotation.StringRes private val titleRes: Int) {
+    SYSTEM(R.string.theme_system),
+    LIGHT(R.string.theme_light),
+    DARK(R.string.theme_dark);
+
+    val title get() = tr(titleRes)
+}
+
 /** Сохранённый принтер (их может быть несколько; активный — один). */
 data class SavedPrinter(
     val id: String,
@@ -63,6 +72,8 @@ data class AppSettings(
     val notifications: Boolean = true,
     /** Имя активного принтера (необязательно). */
     val name: String = "",
+    /** Тема приложения (общая для всех принтеров). */
+    val theme: ThemeMode = ThemeMode.SYSTEM,
 ) {
     /**
      * Режим камеры с учётом «Авто»: WebRTC на :8000, если принтер его поддерживает (K2, Hi, новые K1C),
@@ -103,6 +114,7 @@ class PrinterViewModel(app: Application) : AndroidViewModel(app) {
             cameraUrl = prefs.getString("cameraUrl", "").orEmpty(),
             slicerUrl = prefs.getString("slicerUrl", null)?.ifBlank { null } ?: SlicerViewModel.DEFAULT_SLICER_URL,
             notifications = prefs.getBoolean("notifications", true),
+            theme = runCatching { ThemeMode.valueOf(prefs.getString("theme", "")!!) }.getOrDefault(ThemeMode.SYSTEM),
         )
     )
 
@@ -235,6 +247,7 @@ class PrinterViewModel(app: Application) : AndroidViewModel(app) {
         prefs.edit()
             .putString("slicerUrl", s.slicerUrl)
             .putBoolean("notifications", s.notifications)
+            .putString("theme", s.theme.name)
             .commit()  // сразу на диск: сервис уведомлений читает адрес отсюда
         if (s.host != _settings.value.host) _timelapses.value = TimelapseUi()
         _settings.value = s
