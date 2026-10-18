@@ -492,7 +492,7 @@
     <string name="kg_fmt">%1$d kg</string>
     <string name="g_fmt">%1$d g</string>
     <string name="theme">Theme</string>
-    <string name="theme_system">System</string>
+    <string name="theme_system">System default</string>
     <string name="theme_light">Light</string>
     <string name="theme_dark">Dark</string>
 </resources>

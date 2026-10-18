@@ -59,9 +59,6 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import app.filum.AppSettings
 import app.filum.CameraMode
 import app.filum.ThemeMode
-import androidx.compose.material3.SegmentedButton
-import androidx.compose.material3.SegmentedButtonDefaults
-import androidx.compose.material3.SingleChoiceSegmentedButtonRow
 import app.filum.PrinterViewModel
 import app.filum.SlicerViewModel
 import androidx.compose.material.icons.filled.ViewInAr
@@ -313,14 +310,13 @@ private fun SettingsDialog(
                     androidx.compose.material3.Switch(checked = notifications, onCheckedChange = { notifications = it })
                 }
                 Text(tr(R.string.theme), style = MaterialTheme.typography.titleSmall)
-                SingleChoiceSegmentedButtonRow(Modifier.fillMaxWidth()) {
-                    ThemeMode.entries.forEachIndexed { i, t ->
-                        SegmentedButton(
-                            selected = theme == t,
-                            onClick = { theme = t },
-                            shape = SegmentedButtonDefaults.itemShape(i, ThemeMode.entries.size),
-                            icon = {},
-                        ) { Text(t.title, maxLines = 1) }
+                ThemeMode.entries.forEach { t ->
+                    Row(
+                        Modifier.fillMaxWidth().selectable(selected = theme == t, onClick = { theme = t }),
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        RadioButton(selected = theme == t, onClick = { theme = t })
+                        Text(t.title)
                     }
                 }
             }
