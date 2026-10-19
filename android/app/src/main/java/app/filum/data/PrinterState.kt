@@ -31,6 +31,8 @@ data class PrinterState(
     val gcodeZOffset: Double? = null,
     /** probe.z_offset — z_offset датчика: из printer.cfg или новый после Z_OFFSET_APPLY_PROBE. */
     val probeZOffset: Double? = null,
+    /** z_offset датчика в загруженном printer.cfg (до перезапуска Klipper считает Z от него). */
+    val cfgProbeZOffset: Double? = null,
     val homedAxes: String = "",
     val modelFanPct: Int? = null,
     val auxFanPct: Int? = null,

@@ -507,11 +507,11 @@
     <string name="zoffset_adjust_hint">The buttons adjust Z right away, also while printing (+ moves the nozzle up). The adjustment lasts until the next print starts: save it to keep it.</string>
     <string name="zoffset_saved_label">Permanent Z-offset</string>
     <string name="mm_unit">mm</string>
-    <string name="zoffset_save_hint">Saved to the printer config and used for every print. Klipper restarts to apply it (about 20 s).</string>
+    <string name="zoffset_save_hint">Saved to the printer config, without a restart. Prints from now on use it.</string>
     <string name="zoffset_save_after_print">Can be saved when no print is running. The current adjustment stays until the print ends, then you can save it.</string>
     <string name="zoffset_confirm_title">Save Z-offset %1$s mm?</string>
-    <string name="zoffset_confirm">The value is written to printer.cfg as the z_offset of the Z probe, and Klipper restarts. Every print from now on uses it. + means the nozzle is farther from the bed, − closer. Change it in small steps: a too low nozzle can damage the bed.</string>
-    <string name="zoffset_saved">Z-offset %1$s mm saved, Klipper is restarting</string>
+    <string name="zoffset_confirm">The value is written to printer.cfg as the z_offset of the Z probe, the same way the printer screen does it. Every print from now on uses it. + means the nozzle is farther from the bed, − closer. Change it in small steps: a too low nozzle can damage the bed.</string>
+    <string name="zoffset_saved">Z-offset %1$s mm saved</string>
     <string name="zoffset_error">Couldn\'t save Z-offset: %1$s</string>
     <string name="zoffset_no_probe">the printer config has no Z probe with z_offset</string>
 </resources>

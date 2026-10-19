@@ -88,6 +88,7 @@ class PrinterClient(private val scope: CoroutineScope) {
         synchronized(objects) { objects.clear() }
         hostname = null
         caps = PrinterCaps()
+        cfgProbeZ = null
         _fault.value = null
         endBusy()
         _state.value = PrinterState()
@@ -167,10 +168,13 @@ class PrinterClient(private val scope: CoroutineScope) {
     }
 
     @Volatile private var caps = PrinterCaps()
+    /** z_offset датчика из загруженного printer.cfg: от него Klipper считает Z до перезапуска. */
+    @Volatile private var cfgProbeZ: Double? = null
     val capabilities get() = caps
 
     /** Подписка на объекты Klipper; если Klipper ещё не готов — повторяем. */
     private fun subscribe() {
+        if (caps.probe) loadProbeConfig {}
         val objs = JSONObject()
         caps.subscribeList().forEach { objs.put(it, JSONObject.NULL) }
         call("printer.objects.subscribe", JSONObject().put("objects", objs)) { result, error ->
@@ -236,7 +240,7 @@ class PrinterClient(private val scope: CoroutineScope) {
     }
 
     private fun publish() {
-        val s = synchronized(objects) { PrinterState.from(objects, hostname, caps) }
+        val s = synchronized(objects) { PrinterState.from(objects, hostname, caps) }.copy(cfgProbeZOffset = cfgProbeZ)
         // печать возобновилась или началась новая — прошлая ошибка уже не актуальна
         if (s.isPrinting && _state.value.printState != "printing") _fault.value = null
         if (_busy.value != null && s.printState != busyFromState) endBusy()
@@ -342,25 +346,36 @@ class PrinterClient(private val scope: CoroutineScope) {
      * SET_GCODE_OFFSET, а z_offset датчика задаёт ноль Z при каждом хоминге.
      *
      * Z_OFFSET_APPLY_PROBE считает новый z_offset как «z_offset из конфига − homing_origin.z», поэтому
-     * сначала ставим homing_origin.z = cfg + mm. Затем CXSAVE_CONFIG пишет printer.cfg и RESTART
-     * перечитывает его (на обычном Klipper SAVE_CONFIG делает и то и другое). Только без активной печати.
+     * сначала ставим homing_origin.z = cfg + mm. Klipper Creality применяет новый z_offset сразу, а
+     * CXSAVE_CONFIG пишет его в printer.cfg без перезапуска — так делает и экран K2. RESTART на K2 нельзя:
+     * моторы и CFS на RS-485 после него не отвечают (key798) и Klipper падает. На обычном Klipper —
+     * SAVE_CONFIG (он перезапускается сам). Только без активной печати.
      */
     fun saveZOffset(mm: Double, onDone: (String?) -> Unit) {
-        call("printer.objects.query", JSONObject().put("objects", JSONObject().put("configfile", JSONArray().put("settings")))) { result, error ->
-            val settings = (result as? JSONObject)?.optJSONObject("status")?.optJSONObject("configfile")?.optJSONObject("settings")
-            val cfg = PROBE_SECTIONS.firstNotNullOfOrNull { settings?.optJSONObject(it)?.takeIf { s -> s.has("z_offset") } }
-                ?.optDouble("z_offset")?.takeIf { !it.isNaN() }
+        loadProbeConfig { cfg ->
             if (cfg == null) {
-                onDone(error?.optString("message") ?: tr(R.string.zoffset_no_probe))
-                return@call
+                onDone(tr(R.string.zoffset_no_probe))
+                return@loadProbeConfig
             }
-            val save = if (caps.cxSaveConfig) "CXSAVE_CONFIG\nRESTART" else "SAVE_CONFIG"
+            val save = if (caps.cxSaveConfig) "CXSAVE_CONFIG" else "SAVE_CONFIG"
             val script = "SET_GCODE_OFFSET Z=${fmt3(cfg + mm)} MOVE=0\nZ_OFFSET_APPLY_PROBE\n$save"
             addLog('>', script.replace("\n", " ⏎ "))
             call("printer.gcode.script", JSONObject().put("script", script)) { _, err ->
-                // RESTART обрывает связь с Klipper до ответа — это не ошибка
+                // SAVE_CONFIG обрывает связь с Klipper до ответа — это не ошибка
                 onDone(err?.optString("message")?.takeUnless { it.contains("disconnect", true) || it.contains("restart", true) })
             }
+        }
+    }
+
+    /** z_offset датчика из configfile.settings (загруженный конфиг, а не ещё не применённое автосохранение). */
+    private fun loadProbeConfig(onDone: (Double?) -> Unit) {
+        call("printer.objects.query", JSONObject().put("objects", JSONObject().put("configfile", JSONArray().put("settings")))) { result, _ ->
+            val settings = (result as? JSONObject)?.optJSONObject("status")?.optJSONObject("configfile")?.optJSONObject("settings")
+            val cfg = PROBE_SECTIONS.firstNotNullOfOrNull { settings?.optJSONObject(it)?.takeIf { s -> s.has("z_offset") } }
+                ?.optDouble("z_offset")?.takeIf { !it.isNaN() }
+            cfgProbeZ = cfg
+            publish()
+            onDone(cfg)
         }
     }
 

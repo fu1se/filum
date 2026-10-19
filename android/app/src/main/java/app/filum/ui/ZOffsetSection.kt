@@ -43,7 +43,9 @@ private fun mm(v: Double) = "%+.3f".format(Locale.US, v + 0.0)
 fun ZOffsetSection(state: PrinterState, connected: Boolean, client: PrinterClient) {
     val probe = state.probeZOffset
     val saved = probe?.let { -it }
-    val current = if (probe != null) (state.gcodeZOffset ?: 0.0) - probe else state.gcodeZOffset
+    // Z сейчас считается от z_offset загруженного конфига; сохранённый новый вступит при следующем хоминге
+    val base = state.cfgProbeZOffset ?: probe
+    val current = if (base != null) (state.gcodeZOffset ?: 0.0) - base else state.gcodeZOffset
     var text by remember { mutableStateOf("") }
     var edited by remember { mutableStateOf(false) }
     // пока пользователь не начал править — поле следует за текущим значением (подстройка кнопками)
