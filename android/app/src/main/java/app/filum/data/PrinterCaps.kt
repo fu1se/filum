@@ -34,6 +34,13 @@ data class PrinterCaps(
      */
     val nozzleDiameter get() = !known || "SET_NOZZLE_DIAMETER" in commands || "CXSAVE_CONFIG" in commands
 
+    /** Датчик для хоминга Z (`probe`; у K2 это тензодатчик PRTouch). */
+    val probe get() = has("probe")
+    /** Z-offset можно сохранить постоянно: Z_OFFSET_APPLY_PROBE пишет z_offset датчика в автосохранение. */
+    val zOffsetSave get() = probe && (!known || "Z_OFFSET_APPLY_PROBE" in commands)
+    /** CXSAVE_CONFIG — запись printer.cfg без перезапуска (Klipper Creality); иначе SAVE_CONFIG перезапускает сам. */
+    val cxSaveConfig get() = !known || "CXSAVE_CONFIG" in commands
+
     /** На что подписываться: только существующие объекты. */
     fun subscribeList(): List<String> = if (!known) ALL else ALL.filter { it in objects }
 
@@ -45,7 +52,7 @@ data class PrinterCaps(
             "webhooks", "print_stats", "virtual_sdcard", "extruder", "heater_bed",
             CHAMBER_HEATER, CHAMBER_SENSOR,
             "output_pin fan0", "output_pin fan1", "output_pin fan2", "fan",
-            "gcode_move", "toolhead", "pause_resume",
+            "gcode_move", "toolhead", "pause_resume", "probe",
         ) + LIGHT_PINS.map { "output_pin $it" }
     }
 }

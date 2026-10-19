@@ -192,7 +192,7 @@ fun App(vm: PrinterViewModel, slicerVm: SlicerViewModel) {
                     DashboardScreen(state, connected, settings, vm.client, pickFault(screenFault, gcodeFault, state),
                         crealityInfo?.webrtc, noCamera = crealityInfo?.camera == false)
                 }
-                1 -> ControlScreen(state, connected, vm.client, slicerVm)
+                1 -> ControlScreen(state, connected, vm.client, slicerVm, expert = settings.expert)
                 2 -> SlicerScreen(slicerVm, connected)
                 3 -> FilesScreen(files, state, connected, vm.client)
                 4 -> TimelapseScreen(vm, timelapses, settings.hostOnly())
@@ -204,7 +204,7 @@ fun App(vm: PrinterViewModel, slicerVm: SlicerViewModel) {
     if (showSettings) {
         val adding = addingPrinter || settings.host.isBlank()
         SettingsDialog(
-            initial = if (addingPrinter) AppSettings(slicerUrl = settings.slicerUrl, notifications = settings.notifications, theme = settings.theme) else settings,
+            initial = if (addingPrinter) AppSettings(slicerUrl = settings.slicerUrl, notifications = settings.notifications, theme = settings.theme, expert = settings.expert) else settings,
             adding = adding,
             canDelete = !adding && printers.size > 1,
             canCancel = printers.isNotEmpty(),
@@ -241,6 +241,7 @@ private fun SettingsDialog(
     var slicerUrl by remember { mutableStateOf(initial.slicerUrl) }
     var notifications by remember { mutableStateOf(initial.notifications) }
     var theme by remember { mutableStateOf(initial.theme) }
+    var expert by remember { mutableStateOf(initial.expert) }
     val preview = AppSettings(host.trim(), mode, "").resolvedCameraUrl()
 
     AlertDialog(
@@ -309,6 +310,14 @@ private fun SettingsDialog(
                     }
                     androidx.compose.material3.Switch(checked = notifications, onCheckedChange = { notifications = it })
                 }
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Column(Modifier.weight(1f)) {
+                        Text(tr(R.string.expert_mode), style = MaterialTheme.typography.titleSmall)
+                        Text(tr(R.string.expert_mode_desc),
+                            style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    }
+                    androidx.compose.material3.Switch(checked = expert, onCheckedChange = { expert = it })
+                }
                 Text(tr(R.string.theme), style = MaterialTheme.typography.titleSmall)
                 ThemeMode.entries.forEach { t ->
                     Row(
@@ -325,7 +334,7 @@ private fun SettingsDialog(
             TextButton(
                 onClick = {
                     onSave(AppSettings(host.trim(), mode, camUrl.trim(),
-                        slicerUrl.trim().ifBlank { SlicerViewModel.DEFAULT_SLICER_URL }, notifications, name.trim(), theme))
+                        slicerUrl.trim().ifBlank { SlicerViewModel.DEFAULT_SLICER_URL }, notifications, name.trim(), theme, expert))
                 },
                 enabled = host.isNotBlank(),
             ) { Text(tr(R.string.save)) }

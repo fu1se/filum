@@ -494,4 +494,23 @@
     <string name="theme_system">Как в системе</string>
     <string name="theme_light">Светлая</string>
     <string name="theme_dark">Тёмная</string>
+    <string name="log_busy">%1$s: предыдущая команда ещё выполняется на принтере, пропущено</string>
+    <string name="status_pausing">Ставлю на паузу…</string>
+    <string name="status_resuming">Продолжаю…</string>
+    <string name="status_cancelling">Отменяю…</string>
+    <!-- Режим эксперта: Z-offset -->
+    <string name="expert_mode">Режим эксперта</string>
+    <string name="expert_mode_desc">Дополнительные настройки для опытных: Z-offset.</string>
+    <string name="zoffset_title">Z-offset</string>
+    <string name="zoffset_now">Сейчас %1$s мм · сохранено %2$s мм</string>
+    <string name="zoffset_adjust_hint">Кнопки меняют Z сразу, в том числе во время печати (+ поднимает сопло). Подстройка действует до начала следующей печати — чтобы оставить её, сохраните.</string>
+    <string name="zoffset_saved_label">Постоянный Z-offset</string>
+    <string name="mm_unit">мм</string>
+    <string name="zoffset_save_hint">Сохраняется в конфиг принтера и действует во всех печатях. Чтобы применить, Klipper перезапустится (около 20 с).</string>
+    <string name="zoffset_save_after_print">Сохранить можно, когда печать не идёт. Текущая подстройка останется до конца печати — потом её можно сохранить.</string>
+    <string name="zoffset_confirm_title">Сохранить Z-offset %1$s мм?</string>
+    <string name="zoffset_confirm">Значение запишется в printer.cfg как z_offset датчика Z, Klipper перезапустится. Дальше его используют все печати. «+» — сопло дальше от стола, «−» — ближе. Меняйте понемногу: слишком низкое сопло может повредить стол.</string>
+    <string name="zoffset_saved">Z-offset %1$s мм сохранён, Klipper перезапускается</string>
+    <string name="zoffset_error">Не удалось сохранить Z-offset: %1$s</string>
+    <string name="zoffset_no_probe">в конфиге принтера нет датчика Z с z_offset</string>
 </resources>

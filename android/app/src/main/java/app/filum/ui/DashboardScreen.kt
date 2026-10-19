@@ -53,7 +53,9 @@ import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import app.filum.AppSettings
 import app.filum.CameraMode
+import app.filum.data.PrintAction
 import app.filum.data.PrinterClient
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import app.filum.data.PrinterState
 
 @Composable
@@ -71,6 +73,7 @@ fun DashboardScreen(
     var dismissed by remember { mutableStateOf<Long?>(null) }
     var reloadKey by remember { mutableIntStateOf(0) }
     var confirmStop by remember { mutableStateOf(false) }
+    val busy by client.busy.collectAsStateWithLifecycle()
 
     Column(
         Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(12.dp),
@@ -98,7 +101,12 @@ fun DashboardScreen(
         Section(tr(R.string.print_section)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Text(
-                    state.statusText,
+                    when (busy) {
+                        PrintAction.Pause -> tr(R.string.status_pausing)
+                        PrintAction.Resume -> tr(R.string.status_resuming)
+                        PrintAction.Cancel -> tr(R.string.status_cancelling)
+                        null -> state.statusText
+                    },
                     Modifier.weight(1f),
                     style = MaterialTheme.typography.titleLarge,
                     color = when {
@@ -130,19 +138,19 @@ fun DashboardScreen(
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 FilledTonalButton(
                     onClick = { client.pause() },
-                    enabled = connected && state.isPrinting,
+                    enabled = connected && state.isPrinting && busy == null,
                     modifier = Modifier.weight(1f),
                     contentPadding = BtnPadding,
-                ) { ActionLabel(Icons.Default.Pause, tr(R.string.pause)) }
+                ) { if (busy == PrintAction.Pause) BusyLabel() else ActionLabel(Icons.Default.Pause, tr(R.string.pause)) }
                 FilledTonalButton(
                     onClick = { client.resume() },
-                    enabled = connected && state.isPaused,
+                    enabled = connected && state.isPaused && busy == null,
                     modifier = Modifier.weight(1f),
                     contentPadding = BtnPadding,
-                ) { ActionLabel(Icons.Default.PlayArrow, tr(R.string.resume_short)) }
+                ) { if (busy == PrintAction.Resume) BusyLabel() else ActionLabel(Icons.Default.PlayArrow, tr(R.string.resume_short)) }
                 Button(
                     onClick = { confirmStop = true },
-                    enabled = connected && state.hasActiveJob,
+                    enabled = connected && state.hasActiveJob && busy != PrintAction.Cancel,
                     colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error),
                     modifier = Modifier.weight(1f),
                     contentPadding = BtnPadding,
@@ -220,3 +228,8 @@ fun InfoCell(label: String, value: String, modifier: Modifier = Modifier) {
         Text(value, style = MaterialTheme.typography.bodyLarge)
     }
 }
+
+@Composable
+private fun BusyLabel() = androidx.compose.material3.CircularProgressIndicator(
+    Modifier.size(18.dp), strokeWidth = 2.dp, color = MaterialTheme.colorScheme.onSurfaceVariant,
+)

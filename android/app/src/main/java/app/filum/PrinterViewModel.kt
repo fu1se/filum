@@ -74,6 +74,8 @@ data class AppSettings(
     val name: String = "",
     /** Тема приложения (общая для всех принтеров). */
     val theme: ThemeMode = ThemeMode.SYSTEM,
+    /** Режим эксперта: Z-offset и прочее, что легко испортить (общий для всех принтеров). */
+    val expert: Boolean = false,
 ) {
     /**
      * Режим камеры с учётом «Авто»: WebRTC на :8000, если принтер его поддерживает (K2, Hi, новые K1C),
@@ -115,6 +117,7 @@ class PrinterViewModel(app: Application) : AndroidViewModel(app) {
             slicerUrl = prefs.getString("slicerUrl", null)?.ifBlank { null } ?: SlicerViewModel.DEFAULT_SLICER_URL,
             notifications = prefs.getBoolean("notifications", true),
             theme = runCatching { ThemeMode.valueOf(prefs.getString("theme", "")!!) }.getOrDefault(ThemeMode.SYSTEM),
+            expert = prefs.getBoolean("expert", false),
         )
     )
 
@@ -248,6 +251,7 @@ class PrinterViewModel(app: Application) : AndroidViewModel(app) {
             .putString("slicerUrl", s.slicerUrl)
             .putBoolean("notifications", s.notifications)
             .putString("theme", s.theme.name)
+            .putBoolean("expert", s.expert)
             .commit()  // сразу на диск: сервис уведомлений читает адрес отсюда
         if (s.host != _settings.value.host) _timelapses.value = TimelapseUi()
         _settings.value = s

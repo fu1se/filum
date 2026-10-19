@@ -60,7 +60,7 @@ private val presets = listOf(
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
-fun ControlScreen(state: PrinterState, connected: Boolean, client: PrinterClient, slicerVm: SlicerViewModel) {
+fun ControlScreen(state: PrinterState, connected: Boolean, client: PrinterClient, slicerVm: SlicerViewModel, expert: Boolean = false) {
     val slicerUi by slicerVm.ui.collectAsStateWithLifecycle()
     var editSlot by remember { mutableStateOf<CfsSlot?>(null) }
     var tagFor by remember { mutableStateOf<TagPrefill?>(null) }
@@ -192,6 +192,8 @@ fun ControlScreen(state: PrinterState, connected: Boolean, client: PrinterClient
                 Text(tr(R.string.rfid_button), Modifier.padding(start = 8.dp))
             }
         }
+
+        if (expert && state.caps.probe) ZOffsetSection(state, connected, client)
 
         Section(tr(R.string.extruder)) {
             Text(

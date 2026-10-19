@@ -68,6 +68,21 @@ class PrintMonitorService : Service() {
     private val objects = HashMap<String, JSONObject>()
     private var hostname: String? = null
     private var lastState: PrinterState? = null
+    /** Отправленная пауза/продолжение: print_stats.state на момент нажатия и время (см. PrinterClient.busy). */
+    private var actionFrom: String? = null
+    private var actionAt = 0L
+
+    private fun actionPending(s: PrinterState?) =
+        actionAt != 0L && s?.printState == actionFrom && System.currentTimeMillis() - actionAt < 5 * 60_000L
+
+    /** Повторное нажатие, пока макрос PAUSE/RESUME ещё идёт, игнорируется. */
+    private fun printAction(method: String) {
+        if (actionPending(lastState)) return
+        actionFrom = lastState?.printState
+        actionAt = System.currentTimeMillis()
+        call(method) { exec.execute { actionAt = 0L; render() } }
+        render()
+    }
     private var lastKlippy: String? = null
     private var lastShown: String? = null
     private var lastError: Pair<String, Long>? = null
@@ -93,8 +108,8 @@ class PrintMonitorService : Service() {
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         when (intent?.action) {
             ACTION_STOP -> { stopSelf(); return START_NOT_STICKY }
-            ACTION_PAUSE -> exec.execute { call("printer.print.pause") }
-            ACTION_RESUME -> exec.execute { call("printer.print.resume") }
+            ACTION_PAUSE -> exec.execute { printAction("printer.print.pause") }
+            ACTION_RESUME -> exec.execute { printAction("printer.print.resume") }
             else -> exec.execute {
                 val h = prefs(this).getString("host", "").orEmpty().trim()
                 if (h.isEmpty()) { stopSelf(); return@execute }
@@ -304,7 +319,7 @@ class PrintMonitorService : Service() {
             .setShowWhen(false)
             .setCategory(NotificationCompat.CATEGORY_PROGRESS)
             .setContentIntent(openApp())
-        if (connected) {
+        if (connected && !actionPending(s)) {
             if (paused) b.addAction(0, tr(R.string.resume), action(ACTION_RESUME))
             else b.addAction(0, tr(R.string.pause), action(ACTION_PAUSE))
         }

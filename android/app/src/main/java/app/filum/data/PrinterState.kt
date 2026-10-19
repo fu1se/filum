@@ -27,6 +27,10 @@ data class PrinterState(
     val layer: Int? = null,
     val totalLayers: Int? = null,
     val position: String? = null,
+    /** gcode_move.homing_origin[2] — текущее смещение Z (SET_GCODE_OFFSET), START_PRINT у K2 его обнуляет. */
+    val gcodeZOffset: Double? = null,
+    /** probe.z_offset — z_offset датчика: из printer.cfg или новый после Z_OFFSET_APPLY_PROBE. */
+    val probeZOffset: Double? = null,
     val homedAxes: String = "",
     val modelFanPct: Int? = null,
     val auxFanPct: Int? = null,
@@ -107,6 +111,8 @@ data class PrinterState(
                     "X %.2f  Y %.2f  Z %.2f".format(it.optDouble(0), it.optDouble(1), it.optDouble(2))
                 },
                 homedAxes = o["toolhead"]?.optString("homed_axes").orEmpty(),
+                gcodeZOffset = move?.optJSONArray("homing_origin")?.optDouble(2)?.takeIf { !it.isNaN() },
+                probeZOffset = o["probe"]?.dbl("z_offset"),
                 modelFanPct = o["output_pin fan0"]?.pct("value") ?: o["fan"]?.pct("speed"),
                 auxFanPct = o["output_pin fan1"]?.pct("value"),
                 caseFanPct = o["output_pin fan2"]?.pct("value"),

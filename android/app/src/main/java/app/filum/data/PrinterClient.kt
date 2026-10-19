@@ -22,6 +22,9 @@ import java.util.concurrent.atomic.AtomicInteger
 
 enum class ConnState { Disconnected, Connecting, Connected }
 
+/** Команда печати, которая ещё выполняется на принтере. */
+enum class PrintAction { Pause, Resume, Cancel }
+
 data class LogLine(val time: Long, val dir: Char, val text: String)
 
 /**
@@ -48,6 +51,16 @@ class PrinterClient(private val scope: CoroutineScope) {
     /** Последняя ошибка из ответов G-code (с уточнениями вроде слота CFS); сбрасывается, когда печать идёт. */
     private val _fault = MutableStateFlow<ActiveFault?>(null)
     val fault: StateFlow<ActiveFault?> = _fault.asStateFlow()
+
+    /**
+     * Пауза / продолжение / отмена, отправленные и ещё не завершённые. Макросы PAUSE и RESUME у Creality идут
+     * долго (нагрев, подача из CFS, парковка), а print_stats всё это время остаётся прежним — без этой
+     * блокировки повторные нажатия встают в очередь и выполняются друг за другом.
+     */
+    private val _busy = MutableStateFlow<PrintAction?>(null)
+    val busy: StateFlow<PrintAction?> = _busy.asStateFlow()
+    private var busyFromState: String? = null
+    private var busyJob: Job? = null
 
     private val _files = MutableStateFlow<List<GcodeFile>?>(null)
     val files: StateFlow<List<GcodeFile>?> = _files.asStateFlow()
@@ -76,6 +89,7 @@ class PrinterClient(private val scope: CoroutineScope) {
         hostname = null
         caps = PrinterCaps()
         _fault.value = null
+        endBusy()
         _state.value = PrinterState()
         _files.value = null
         open()
@@ -225,6 +239,7 @@ class PrinterClient(private val scope: CoroutineScope) {
         val s = synchronized(objects) { PrinterState.from(objects, hostname, caps) }
         // печать возобновилась или началась новая — прошлая ошибка уже не актуальна
         if (s.isPrinting && _state.value.printState != "printing") _fault.value = null
+        if (_busy.value != null && s.printState != busyFromState) endBusy()
         _state.value = s
     }
 
@@ -264,9 +279,40 @@ class PrinterClient(private val scope: CoroutineScope) {
         call("printer.gcode.script", JSONObject().put("script", script)) { _, _ -> }
     }
 
-    fun pause() { addLog('>', tr(R.string.pause)); call("printer.print.pause") }
-    fun resume() { addLog('>', tr(R.string.resume)); call("printer.print.resume") }
-    fun stop() { addLog('>', tr(R.string.log_cancel_print)); call("printer.print.cancel") }
+    fun pause() = printAction(PrintAction.Pause, "printer.print.pause", tr(R.string.pause))
+    fun resume() = printAction(PrintAction.Resume, "printer.print.resume", tr(R.string.resume))
+    fun stop() = printAction(PrintAction.Cancel, "printer.print.cancel", tr(R.string.log_cancel_print))
+
+    /**
+     * Шлёт команду, только если предыдущая уже завершилась. Отмену можно отправить поверх паузы или
+     * продолжения, но не дважды. Блокировка снимается, когда меняется print_stats.state, когда Moonraker
+     * отвечает на запрос (он ждёт конца макроса) или через [BUSY_TIMEOUT_MS].
+     */
+    @Synchronized
+    private fun printAction(action: PrintAction, method: String, label: String) {
+        val current = _busy.value
+        if (current != null && (action != PrintAction.Cancel || current == PrintAction.Cancel)) {
+            addLog('!', tr(R.string.log_busy, label))
+            return
+        }
+        addLog('>', label)
+        val sent = call(method) { _, _ ->
+            // состояние обычно приходит вместе с ответом; если не изменилось (макрос отказал) — разблокировать
+            scope.launch { delay(1500); if (_busy.value == action) endBusy() }
+        }
+        if (!sent) return
+        busyFromState = _state.value.printState
+        _busy.value = action
+        busyJob?.cancel()
+        busyJob = scope.launch { delay(BUSY_TIMEOUT_MS); endBusy() }
+    }
+
+    @Synchronized
+    private fun endBusy() {
+        busyJob?.cancel()
+        busyJob = null
+        _busy.value = null
+    }
 
     fun setLight(on: Boolean) = caps.lightPin?.let { gcode("SET_PIN PIN=$it VALUE=${if (on) 1 else 0}") }
 
@@ -283,6 +329,39 @@ class PrinterClient(private val scope: CoroutineScope) {
         val s = (pct.coerceIn(0, 100) * 255 + 50) / 100
         gcode(if (caps.crealityFans) { if (pct <= 0) "M107 P$fan" else "M106 P$fan S$s" }
               else { if (pct <= 0) "M107" else "M106 S$s" })
+    }
+
+    /** Подстройка Z на лету (как «babystep» на экране); MOVE=1 сдвигает сопло сразу, если Z уже в нуле. */
+    fun adjustZOffset(delta: Double) {
+        val move = if ('z' in _state.value.homedAxes) 1 else 0
+        gcode("SET_GCODE_OFFSET Z_ADJUST=${fmt3(delta)} MOVE=$move")
+    }
+
+    /**
+     * Постоянный Z-offset [mm] (+ — сопло выше). Хранится в z_offset датчика: START_PRINT у K2 обнуляет
+     * SET_GCODE_OFFSET, а z_offset датчика задаёт ноль Z при каждом хоминге.
+     *
+     * Z_OFFSET_APPLY_PROBE считает новый z_offset как «z_offset из конфига − homing_origin.z», поэтому
+     * сначала ставим homing_origin.z = cfg + mm. Затем CXSAVE_CONFIG пишет printer.cfg и RESTART
+     * перечитывает его (на обычном Klipper SAVE_CONFIG делает и то и другое). Только без активной печати.
+     */
+    fun saveZOffset(mm: Double, onDone: (String?) -> Unit) {
+        call("printer.objects.query", JSONObject().put("objects", JSONObject().put("configfile", JSONArray().put("settings")))) { result, error ->
+            val settings = (result as? JSONObject)?.optJSONObject("status")?.optJSONObject("configfile")?.optJSONObject("settings")
+            val cfg = PROBE_SECTIONS.firstNotNullOfOrNull { settings?.optJSONObject(it)?.takeIf { s -> s.has("z_offset") } }
+                ?.optDouble("z_offset")?.takeIf { !it.isNaN() }
+            if (cfg == null) {
+                onDone(error?.optString("message") ?: tr(R.string.zoffset_no_probe))
+                return@call
+            }
+            val save = if (caps.cxSaveConfig) "CXSAVE_CONFIG\nRESTART" else "SAVE_CONFIG"
+            val script = "SET_GCODE_OFFSET Z=${fmt3(cfg + mm)} MOVE=0\nZ_OFFSET_APPLY_PROBE\n$save"
+            addLog('>', script.replace("\n", " ⏎ "))
+            call("printer.gcode.script", JSONObject().put("script", script)) { _, err ->
+                // RESTART обрывает связь с Klipper до ответа — это не ошибка
+                onDone(err?.optString("message")?.takeUnless { it.contains("disconnect", true) || it.contains("restart", true) })
+            }
+        }
     }
 
     fun setSpeedPct(pct: Int) = gcode("M220 S$pct")
@@ -306,9 +385,14 @@ class PrinterClient(private val scope: CoroutineScope) {
     }
 
     private fun fmt(v: Double) = if (v == v.toLong().toDouble()) v.toLong().toString() else v.toString()
+    private fun fmt3(v: Double) = "%.3f".format(java.util.Locale.US, v)
 
     companion object {
         const val MOONRAKER_PORT = 7125
+        /** Секции датчика с z_offset — та, что задаёт ноль Z (у K2 — prtouch_v3). */
+        val PROBE_SECTIONS = listOf("prtouch_v3", "prtouch_v2", "prtouch", "probe", "bltouch", "probe_eddy_current", "beacon", "cartographer")
+        /** Дольше любой разумной паузы/продолжения K2 (нагрев сопла + подача из CFS). */
+        const val BUSY_TIMEOUT_MS = 5 * 60_000L
 
     }
 }
