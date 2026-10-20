@@ -193,7 +193,7 @@ fun ControlScreen(state: PrinterState, connected: Boolean, client: PrinterClient
             }
         }
 
-        if (expert && state.caps.probe) ZOffsetSection(state, connected, client)
+        if (expert) ZOffsetSection(state, connected, client)
 
         Section(tr(R.string.extruder)) {
             Text(

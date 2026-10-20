@@ -88,7 +88,6 @@ class PrinterClient(private val scope: CoroutineScope) {
         synchronized(objects) { objects.clear() }
         hostname = null
         caps = PrinterCaps()
-        cfgProbeZ = null
         _fault.value = null
         endBusy()
         _state.value = PrinterState()
@@ -168,13 +167,10 @@ class PrinterClient(private val scope: CoroutineScope) {
     }
 
     @Volatile private var caps = PrinterCaps()
-    /** z_offset датчика из загруженного printer.cfg: от него Klipper считает Z до перезапуска. */
-    @Volatile private var cfgProbeZ: Double? = null
     val capabilities get() = caps
 
     /** Подписка на объекты Klipper; если Klipper ещё не готов — повторяем. */
     private fun subscribe() {
-        if (caps.probe) loadProbeConfig {}
         val objs = JSONObject()
         caps.subscribeList().forEach { objs.put(it, JSONObject.NULL) }
         call("printer.objects.subscribe", JSONObject().put("objects", objs)) { result, error ->
@@ -240,7 +236,7 @@ class PrinterClient(private val scope: CoroutineScope) {
     }
 
     private fun publish() {
-        val s = synchronized(objects) { PrinterState.from(objects, hostname, caps) }.copy(cfgProbeZOffset = cfgProbeZ)
+        val s = synchronized(objects) { PrinterState.from(objects, hostname, caps) }
         // печать возобновилась или началась новая — прошлая ошибка уже не актуальна
         if (s.isPrinting && _state.value.printState != "printing") _fault.value = null
         if (_busy.value != null && s.printState != busyFromState) endBusy()
@@ -341,44 +337,6 @@ class PrinterClient(private val scope: CoroutineScope) {
         gcode("SET_GCODE_OFFSET Z_ADJUST=${fmt3(delta)} MOVE=$move")
     }
 
-    /**
-     * Постоянный Z-offset [mm] (+ — сопло выше). Хранится в z_offset датчика: START_PRINT у K2 обнуляет
-     * SET_GCODE_OFFSET, а z_offset датчика задаёт ноль Z при каждом хоминге.
-     *
-     * Z_OFFSET_APPLY_PROBE считает новый z_offset как «z_offset из конфига − homing_origin.z», поэтому
-     * сначала ставим homing_origin.z = cfg + mm. Klipper Creality применяет новый z_offset сразу, а
-     * CXSAVE_CONFIG пишет его в printer.cfg без перезапуска — так делает и экран K2. RESTART на K2 нельзя:
-     * моторы и CFS на RS-485 после него не отвечают (key798) и Klipper падает. На обычном Klipper —
-     * SAVE_CONFIG (он перезапускается сам). Только без активной печати.
-     */
-    fun saveZOffset(mm: Double, onDone: (String?) -> Unit) {
-        loadProbeConfig { cfg ->
-            if (cfg == null) {
-                onDone(tr(R.string.zoffset_no_probe))
-                return@loadProbeConfig
-            }
-            val save = if (caps.cxSaveConfig) "CXSAVE_CONFIG" else "SAVE_CONFIG"
-            val script = "SET_GCODE_OFFSET Z=${fmt3(cfg + mm)} MOVE=0\nZ_OFFSET_APPLY_PROBE\n$save"
-            addLog('>', script.replace("\n", " ⏎ "))
-            call("printer.gcode.script", JSONObject().put("script", script)) { _, err ->
-                // SAVE_CONFIG обрывает связь с Klipper до ответа — это не ошибка
-                onDone(err?.optString("message")?.takeUnless { it.contains("disconnect", true) || it.contains("restart", true) })
-            }
-        }
-    }
-
-    /** z_offset датчика из configfile.settings (загруженный конфиг, а не ещё не применённое автосохранение). */
-    private fun loadProbeConfig(onDone: (Double?) -> Unit) {
-        call("printer.objects.query", JSONObject().put("objects", JSONObject().put("configfile", JSONArray().put("settings")))) { result, _ ->
-            val settings = (result as? JSONObject)?.optJSONObject("status")?.optJSONObject("configfile")?.optJSONObject("settings")
-            val cfg = PROBE_SECTIONS.firstNotNullOfOrNull { settings?.optJSONObject(it)?.takeIf { s -> s.has("z_offset") } }
-                ?.optDouble("z_offset")?.takeIf { !it.isNaN() }
-            cfgProbeZ = cfg
-            publish()
-            onDone(cfg)
-        }
-    }
-
     fun setSpeedPct(pct: Int) = gcode("M220 S$pct")
     fun setFlowPct(pct: Int) = gcode("M221 S$pct")
 
@@ -404,8 +362,6 @@ class PrinterClient(private val scope: CoroutineScope) {
 
     companion object {
         const val MOONRAKER_PORT = 7125
-        /** Секции датчика с z_offset — та, что задаёт ноль Z (у K2 — prtouch_v3). */
-        val PROBE_SECTIONS = listOf("prtouch_v3", "prtouch_v2", "prtouch", "probe", "bltouch", "probe_eddy_current", "beacon", "cartographer")
         /** Дольше любой разумной паузы/продолжения K2 (нагрев сопла + подача из CFS). */
         const val BUSY_TIMEOUT_MS = 5 * 60_000L
 
