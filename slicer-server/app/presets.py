@@ -13,6 +13,10 @@ SYNC_KIND = {"printer": "machine", "print": "process", "filament": "filament",
              "machine": "machine", "process": "process"}
 
 
+# Текстовые поля: в них «;» — часть текста, а не разделитель вектора
+TEXT_KEYS = {"notes", "printer_notes", "filament_notes", "post_process", "filename_format", "template_custom_gcode"}
+
+
 def parse_vector(raw: str) -> list[str]:
     """Значение-вектор из строки Orca: '"a b";"c"' или '245,245' или '0x0,350x0'."""
     if raw == "":
@@ -78,13 +82,8 @@ class PresetIndex:
             name = content.get("name")
             if not kind or not name:
                 continue
-            data = {}
-            for k, v in content.items():
-                if k in ("base_id", "updated_time", "user_id", "setting_id"):
-                    continue
-                if isinstance(v, str) and k in self.list_keys:
-                    v = parse_vector(v)
-                data[k] = v
+            # строки как есть: вектор это или текст (G-code с «;»), решает resolve() по родителю
+            data = {k: v for k, v in content.items() if k not in ("base_id", "updated_time", "user_id", "setting_id")}
             data["type"] = kind
             self.by_name[name] = (kind, data, "user", True)
 
@@ -98,11 +97,27 @@ class PresetIndex:
         _seen.add(name)
         if name not in self.by_name:
             raise KeyError(f"preset not found: {name}")
-        data = self.by_name[name][1]
+        _, data, _, is_user = self.by_name[name]
         parent = data.get("inherits")
         merged = dict(self.resolve(parent, _seen)) if parent else {}
+        if is_user:
+            data = {k: self._user_value(k, v, merged.get(k)) for k, v in data.items()}
         merged.update(data)
         return merged
+
+    def _user_value(self, key: str, value, inherited):
+        """Значение из orca-sync (всегда строка) → вектор, если это вектор.
+
+        Смотрим на родителя: у него тот же ключ — список или строка. Без родителя — по системным профилям,
+        кроме текстовых полей: G-code и заметки содержат «;», которые иначе разрезались бы на элементы
+        (а Orca склеила бы их обратно через «,» — комментарии G-code превратились бы в команды)."""
+        if not isinstance(value, str):
+            return value
+        if inherited is not None:
+            return parse_vector(value) if isinstance(inherited, list) else value
+        if key.endswith("_gcode") or key in TEXT_KEYS:
+            return value
+        return parse_vector(value) if key in self.list_keys else value
 
     def ancestors(self, name: str) -> list[str]:
         out = []
