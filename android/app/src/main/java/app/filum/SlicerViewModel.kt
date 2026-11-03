@@ -24,6 +24,13 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import kotlinx.coroutines.Dispatchers
+import kotlin.coroutines.resume
+import kotlin.coroutines.suspendCoroutine
+import okhttp3.MediaType.Companion.toMediaType
+import okhttp3.RequestBody.Companion.toRequestBody
+import app.filum.plugins.Plugins
 import org.json.JSONArray
 
 data class SlicerUi(
@@ -405,7 +412,8 @@ class SlicerViewModel(app: Application) : AndroidViewModel(app) {
         viewModelScope.launch {
             try {
                 val j = api.slice(m.id, printer, process, u.filaments, u.plate, u.arrange,
-                    cfs = List(u.filaments.size) { i -> u.cfsAssign.getOrNull(i) }, printerHost = printerHost())
+                    cfs = List(u.filaments.size) { i -> u.cfsAssign.getOrNull(i) }, printerHost = printerHost(),
+                    transform = { req -> suspendCoroutine { c -> Plugins.host.transformSlice(req) { c.resume(it) } } })
                 _ui.update { it.copy(job = j, busy = false) }
                 poll(j.id)
             } catch (e: Exception) {
@@ -443,7 +451,8 @@ class SlicerViewModel(app: Application) : AndroidViewModel(app) {
         _ui.update { it.copy(busy = true) }
         viewModelScope.launch {
             try {
-                val j = api.sendToPrinter(jobId, plate, start, printerHost())
+                val j = if (Plugins.host.hasHook("gcode.file")) sendViaPlugins(jobId, plate, start)
+                    else api.sendToPrinter(jobId, plate, start, printerHost())
                 _ui.update { it.copy(job = if (it.job?.id == j.id) j else it.job, busy = false,
                     message = if (start) tr(R.string.print_started) else tr(R.string.gcode_uploaded)) }
                 refreshLists()
@@ -452,6 +461,32 @@ class SlicerViewModel(app: Application) : AndroidViewModel(app) {
                 fail(e)
             }
         }
+    }
+
+    /**
+     * Хук плагинов gcode.file: G-code скачивается с сервера слайсера, плагины его меняют, и приложение само
+     * загружает результат в Moonraker (сервер слайсера в этом случае файл на принтер не отправляет).
+     */
+    private suspend fun sendViaPlugins(jobId: String, plate: Int, start: Boolean): SliceJob {
+        val job = api.job(jobId)
+        val result = job.results.firstOrNull { it.plate == plate } ?: throw IllegalStateException("no plate $plate")
+        val text = api.gcodeText(jobId, plate)
+        val info = org.json.JSONObject().put("file", result.file).put("plate", plate).put("job", jobId)
+            .put("model", job.modelName).put("process", job.process).put("start", start)
+        val out = suspendCoroutine { c -> Plugins.host.transformGcodeFile(text, info) { c.resume(it) } }
+        withContext(Dispatchers.IO) {
+            val host = settingsPrefs.getString("host", "").orEmpty().trim()
+            val base = "http://${if (host.contains(':')) host else "$host:7125"}"
+            val body = okhttp3.MultipartBody.Builder().setType(okhttp3.MultipartBody.FORM)
+                .addFormDataPart("file", result.file, out.toByteArray().toRequestBody("text/plain".toMediaType()))
+                .addFormDataPart("print", if (start) "true" else "false")
+                .build()
+            okhttp3.OkHttpClient.Builder().writeTimeout(120, java.util.concurrent.TimeUnit.SECONDS).build()
+                .newCall(okhttp3.Request.Builder().url("$base/server/files/upload").post(body).build()).execute().use { r ->
+                    if (!r.isSuccessful) throw java.io.IOException("Moonraker upload: HTTP ${r.code}")
+                }
+        }
+        return job
     }
 
     // ---------- MakerWorld ----------

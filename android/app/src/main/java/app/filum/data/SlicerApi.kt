@@ -263,15 +263,22 @@ class SlicerApi(private val baseUrl: () -> String) {
 
     // ---------- нарезка ----------
 
+    /** [transform] — хук плагинов «slice»: может поменять запрос перед отправкой. */
     suspend fun slice(
         modelId: String, printer: String, process: String, filaments: List<String>,
         plate: Int, arrange: Boolean, cfs: List<String?>, printerHost: String,
-    ): SliceJob = parseJob(postJson("/api/slice", JSONObject()
+        transform: suspend (JSONObject) -> JSONObject = { it },
+    ): SliceJob = parseJob(postJson("/api/slice", transform(JSONObject()
         .put("printer_host", printerHost)
         .put("model_id", modelId).put("printer", printer).put("process", process)
         .put("filaments", JSONArray(filaments)).put("plate", plate).put("arrange", arrange)
         .put("cfs", JSONArray(cfs.map { it ?: JSONObject.NULL }))
-        .put("upload", false).put("start", false)))
+        .put("upload", false).put("start", false))))
+
+    /** Готовый G-code задания (для хука плагинов gcode.file). */
+    suspend fun gcodeText(jobId: String, plate: Int): String = withContext(Dispatchers.IO) {
+        String(call(Request.Builder().url(url("/api/jobs/$jobId/gcode/$plate")).build()), Charsets.UTF_8)
+    }
 
     suspend fun cfs(printer: String?, printerHost: String): List<CfsSlot> =
         getJson("/api/cfs?host=${enc(printerHost)}" + (printer?.let { "&printer=${enc(it)}" } ?: "")).optJSONArray("slots").objects().map {

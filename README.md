@@ -35,6 +35,8 @@ prints, straight from the phone.
 - **Files and timelapses.** Start G-code files on the printer. Watch and download the firmware's timelapse videos.
 - **Several printers.** Save several printers and switch between them in one tap.
 - **G-code console.**
+- **Plugins.** JavaScript plugins can change the commands, slicing requests and G-code the app sends,
+  block prints, react to print events and add their own controls ([API](docs/plugins.md)).
 - **Languages:** English and Russian. Android 13+ lets you choose per app.
 - **Light and dark theme**, or follow the system (⚙ → Theme).
 
@@ -99,6 +101,7 @@ please open an issue.
 - [Slicer server](docs/slicer-server.md): installation, configuration, API
 - [How Creality OS works](docs/creality-protocol.md): Moonraker and the Creality WebSocket (:9999), CFS, error
   codes. Useful if you build your own tools.
+- [Plugins](docs/plugins.md): writing plugins, API reference
 - [RFID tags for spools](docs/rfid.md): writing tags, tag format
 - [material-sync](printer/material-sync/README.md): your filaments in the printer's library
 - [Building and contributing](docs/building.md)

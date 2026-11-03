@@ -93,6 +93,15 @@ temperatures.
 Turn everything off with the **Notifications** switch in ⚙. The service starts with the app, after a reboot and
 after an update.
 
+## Plugins
+
+The puzzle icon in the top bar opens the plugin manager:
+- **Install.** From a file, from a URL, or from the bundled examples. Before installing, the manager shows the
+  plugin's permissions.
+- **Manage.** Turn plugins on and off, read their log, delete them.
+
+Plugin controls appear on the Control tab. How to write plugins: [plugins.md](plugins.md).
+
 ## Language
 
 The app follows the system language: English, or Russian on Russian systems. On Android 13+ you can choose the

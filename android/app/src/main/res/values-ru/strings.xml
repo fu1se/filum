@@ -504,4 +504,30 @@
     <string name="zoffset_title">Z-offset</string>
     <string name="zoffset_now">Подстройка сейчас %1$s мм</string>
     <string name="zoffset_adjust_hint">Кнопки сдвигают Z сразу, в том числе во время печати (+ поднимает сопло). START_PRINT обнуляет подстройку, поэтому постоянный Z-offset задаётся в слайсере: строка SET_GCODE_OFFSET Z=… MOVE=0 сразу после START_PRINT в стартовом G-code профиля принтера.</string>
+    <!-- Плагины -->
+    <string name="plugins">Плагины</string>
+    <string name="plugin_by">плагин %1$s</string>
+    <string name="plugin_from_file">Из файла</string>
+    <string name="plugin_from_url">По ссылке</string>
+    <string name="plugin_examples">Примеры</string>
+    <string name="plugins_hint">Плагины — файлы на JavaScript. Через API плагинов они могут менять команды, которые приложение шлёт принтеру, запросы к слайсеру и G-code перед отправкой на принтер, реагировать на события печати и добавлять свои элементы на вкладку «Управление». Работают, пока открыто приложение. Описание API — docs/plugins.md.</string>
+    <string name="plugins_none">Плагины не установлены.</string>
+    <string name="plugin_bad_file">Это не плагин Filum: %1$s</string>
+    <string name="plugin_error">Ошибка: %1$s</string>
+    <string name="plugin_log">Лог (%1$d)</string>
+    <string name="plugin_install_q">Установить %1$s?</string>
+    <string name="plugin_update_q">Обновить %1$s?</string>
+    <string name="plugin_no_grants">Разрешения не нужны: плагин может только читать состояние принтера и показывать свои элементы.</string>
+    <string name="plugin_grants_title">Разрешения</string>
+    <string name="plugin_trust">Ставьте плагины только от тех, кому доверяете: плагин выполняет код внутри приложения.</string>
+    <string name="plugin_install">Установить</string>
+    <string name="plugin_update">Обновить</string>
+    <string name="plugin_download">Скачать</string>
+    <string name="plugin_delete_q">Удалить %1$s?</string>
+    <string name="plugin_delete_hint">Удалятся плагин и данные, которые он сохранил.</string>
+    <string name="grant_gcode">gcode: отправлять команды принтеру, менять и блокировать команды приложения, запросы к слайсеру и файлы G-code, запрещать запуск печати</string>
+    <string name="grant_http">http: доступ в сеть</string>
+    <string name="grant_notify">notify: показывать уведомления</string>
+    <string name="log_plugin_blocked">Плагин заблокировал команду: %1$s</string>
+    <string name="log_plugin_print_blocked">Плагин заблокировал печать: %1$s</string>
 </resources>

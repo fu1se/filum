@@ -195,6 +195,8 @@ fun ControlScreen(state: PrinterState, connected: Boolean, client: PrinterClient
 
         if (expert) ZOffsetSection(state, connected, client)
 
+        PluginSections()
+
         Section(tr(R.string.extruder)) {
             Text(
                 tr(R.string.extruder_hint),

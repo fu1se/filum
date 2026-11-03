@@ -274,10 +274,38 @@ class PrinterClient(private val scope: CoroutineScope) {
     /** Диаметр сопла: команда прошивки Creality, сохраняет user_nozzle_diameter в printer.cfg без перезапуска. */
     fun setNozzleDiameter(mm: Double) = gcode("SET_NOZZLE_DIAMETER VALUE=%.2f".format(java.util.Locale.US, mm))
 
+    /** Хук плагинов gcode.send: получает команду, отдаёт изменённую или null (не отправлять). */
+    @Volatile var gcodeFilter: ((String, (String?) -> Unit) -> Unit)? = null
+    /** Хук плагинов print.start: true — запускать. */
+    @Volatile var printFilter: ((String, (Boolean) -> Unit) -> Unit)? = null
+
+    val isConnected get() = _connection.value == ConnState.Connected
+
     fun gcode(script: String) {
+        val f = gcodeFilter ?: return sendRaw(script)
+        f(script) { s ->
+            if (s == null) addLog('!', tr(R.string.log_plugin_blocked, script.replace("\n", " ⏎ ")))
+            else sendRaw(s)
+        }
+    }
+
+    /** Отправка без хуков плагинов (её же используют сами плагины). */
+    fun sendRaw(script: String) {
         addLog('>', script.replace("\n", " ⏎ "))
         call("printer.gcode.script", JSONObject().put("script", script)) { _, _ -> }
     }
+
+    /** printer.objects.query: [cb] получит status или null. */
+    fun query(objects: List<String>, cb: (JSONObject?) -> Unit) {
+        val objs = JSONObject()
+        objects.forEach { objs.put(it, JSONObject.NULL) }
+        if (!call("printer.objects.query", JSONObject().put("objects", objs)) { result, _ ->
+                cb((result as? JSONObject)?.optJSONObject("status"))
+            }) cb(null)
+    }
+
+    /** Строка лога плагина в консоли. */
+    fun pluginLog(pluginId: String, level: Char, text: String) = addLog(if (level == 'e') '!' else '#', "[$pluginId] $text")
 
     fun pause() = printAction(PrintAction.Pause, "printer.print.pause", tr(R.string.pause))
     fun resume() = printAction(PrintAction.Resume, "printer.print.resume", tr(R.string.resume))
@@ -353,8 +381,12 @@ class PrinterClient(private val scope: CoroutineScope) {
     }
 
     fun printFile(path: String) {
-        addLog('>', tr(R.string.log_print_file, path))
-        call("printer.print.start", JSONObject().put("filename", path))
+        val start = {
+            addLog('>', tr(R.string.log_print_file, path))
+            call("printer.print.start", JSONObject().put("filename", path))
+        }
+        val f = printFilter ?: return start().let {}
+        f(path) { ok -> if (ok) start() else addLog('!', tr(R.string.log_plugin_print_blocked, path)) }
     }
 
     private fun fmt(v: Double) = if (v == v.toLong().toDouble()) v.toLong().toString() else v.toString()

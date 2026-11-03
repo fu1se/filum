@@ -505,4 +505,30 @@
     <string name="zoffset_title">Z-offset</string>
     <string name="zoffset_now">Live adjustment %1$s mm</string>
     <string name="zoffset_adjust_hint">The buttons move Z right away, also while printing (+ moves the nozzle up). START_PRINT resets the adjustment, so for a permanent Z-offset add SET_GCODE_OFFSET Z=… MOVE=0 right after START_PRINT in the start G-code of the printer profile in the slicer.</string>
+    <!-- Плагины -->
+    <string name="plugins">Plugins</string>
+    <string name="plugin_by">plugin %1$s</string>
+    <string name="plugin_from_file">From file</string>
+    <string name="plugin_from_url">From URL</string>
+    <string name="plugin_examples">Examples</string>
+    <string name="plugins_hint">Plugins are JavaScript files. Through the plugin API they can change the commands the app sends to the printer, slicing requests and the G-code before it goes to the printer, react to print events and add their own controls to the Control tab. They run while the app is open. See docs/plugins.md for the API.</string>
+    <string name="plugins_none">No plugins installed.</string>
+    <string name="plugin_bad_file">Not a Filum plugin: %1$s</string>
+    <string name="plugin_error">Error: %1$s</string>
+    <string name="plugin_log">Log (%1$d)</string>
+    <string name="plugin_install_q">Install %1$s?</string>
+    <string name="plugin_update_q">Update %1$s?</string>
+    <string name="plugin_no_grants">Needs no permissions: it can only read the printer state and show its own controls.</string>
+    <string name="plugin_grants_title">Permissions</string>
+    <string name="plugin_trust">Install plugins only from people you trust: a plugin runs code inside the app.</string>
+    <string name="plugin_install">Install</string>
+    <string name="plugin_update">Update</string>
+    <string name="plugin_download">Download</string>
+    <string name="plugin_delete_q">Delete %1$s?</string>
+    <string name="plugin_delete_hint">The plugin and the data it saved are removed.</string>
+    <string name="grant_gcode">gcode: send commands to the printer, change or block the app\'s commands, slicing requests and G-code files, block print starts</string>
+    <string name="grant_http">http: access the network</string>
+    <string name="grant_notify">notify: show notifications</string>
+    <string name="log_plugin_blocked">A plugin blocked the command: %1$s</string>
+    <string name="log_plugin_print_blocked">A plugin blocked the print: %1$s</string>
 </resources>

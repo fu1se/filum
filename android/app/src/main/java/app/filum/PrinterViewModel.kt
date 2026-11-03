@@ -1,6 +1,7 @@
 package app.filum
 
 import app.filum.data.ConnState
+import app.filum.plugins.Plugins
 import app.filum.data.CrealityStatus
 import app.filum.data.Faults
 import android.app.Application
@@ -192,6 +193,12 @@ class PrinterViewModel(app: Application) : AndroidViewModel(app) {
         // первый запуск после обновления: одиночные настройки → список принтеров
         if (prefs.getString("printers", null) == null && _printers.value.isNotEmpty()) storePrinters(_printers.value, _activeId.value)
         Faults.init(app)
+        // плагины: хуки команд и события состояния принтера
+        Plugins.attach(client)
+        viewModelScope.launch {
+            kotlinx.coroutines.flow.combine(client.state, client.connection) { s, c -> s to (c == ConnState.Connected) }
+                .collect { (s, c) -> Plugins.onState(s, c) }
+        }
         if (_settings.value.host.isNotBlank()) {
             client.connect(_settings.value.host)
             creality.connect(_settings.value.host)
@@ -267,6 +274,7 @@ class PrinterViewModel(app: Application) : AndroidViewModel(app) {
     }
 
     override fun onCleared() {
+        Plugins.detach(client)
         client.disconnect()
     }
 }

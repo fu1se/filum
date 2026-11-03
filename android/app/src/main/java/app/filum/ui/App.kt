@@ -25,6 +25,7 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.List
 import androidx.compose.material.icons.filled.Dashboard
+import androidx.compose.material.icons.filled.Extension
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Terminal
 import androidx.compose.material.icons.filled.Tune
@@ -94,6 +95,7 @@ fun App(vm: PrinterViewModel, slicerVm: SlicerViewModel) {
     var tab by rememberSaveable { mutableIntStateOf(0) }
     var showSettings by rememberSaveable { mutableStateOf(settings.host.isBlank()) }
     var addingPrinter by rememberSaveable { mutableStateOf(false) }
+    var showPlugins by rememberSaveable { mutableStateOf(false) }
     var printerMenu by remember { mutableStateOf(false) }
     val printers by vm.printers.collectAsStateWithLifecycle()
     val activeId by vm.activeId.collectAsStateWithLifecycle()
@@ -167,6 +169,7 @@ fun App(vm: PrinterViewModel, slicerVm: SlicerViewModel) {
                         Icon(Icons.Default.Terminal, tr(R.string.console),
                             tint = if (tab == CONSOLE_TAB) Accent else MaterialTheme.colorScheme.onSurface)
                     }
+                    IconButton(onClick = { showPlugins = true }) { Icon(Icons.Default.Extension, tr(R.string.plugins)) }
                     IconButton(onClick = { showSettings = true }) { Icon(Icons.Default.Settings, tr(R.string.settings)) }
                 },
             )
@@ -201,6 +204,7 @@ fun App(vm: PrinterViewModel, slicerVm: SlicerViewModel) {
         }
     }
 
+    if (showPlugins) PluginsScreen(onClose = { showPlugins = false })
     if (showSettings) {
         val adding = addingPrinter || settings.host.isBlank()
         SettingsDialog(

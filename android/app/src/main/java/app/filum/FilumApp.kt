@@ -2,6 +2,7 @@ package app.filum
 
 import android.app.Application
 import androidx.annotation.StringRes
+import app.filum.plugins.Plugins
 
 /** Приложение: даёт контекст для строковых ресурсов вне Compose (ViewModel, сервис, справочник ошибок). */
 class FilumApp : Application() {
@@ -9,6 +10,7 @@ class FilumApp : Application() {
         super.onCreate()
         // без аргументов — строка как есть: в некоторых свой формат («%.1f мм».format(d))
         Tr.resolve = { id, args -> if (args.isEmpty()) applicationContext.getString(id) else applicationContext.getString(id, *args) }
+        Plugins.init(this)
     }
 }
 

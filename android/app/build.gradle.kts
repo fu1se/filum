@@ -46,6 +46,8 @@ dependencies {
     implementation("androidx.lifecycle:lifecycle-runtime-compose:2.8.7")
     implementation("androidx.core:core-ktx:1.13.1")
     implementation("com.squareup.okhttp3:okhttp:4.12.0")
+    // Плагины на JavaScript: Rhino — чистая Java, на Android работает в режиме интерпретатора
+    implementation("org.mozilla:rhino:1.7.15")
     testImplementation("junit:junit:4.13.2")
     // в юнит-тестах android.jar отдаёт заглушки org.json — нужна настоящая реализация
     testImplementation("org.json:json:20240303")
