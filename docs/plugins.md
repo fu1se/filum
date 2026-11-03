@@ -210,7 +210,11 @@ These are bundled in the app (manager → Examples) and live in
 | `temperature-guard.js` | `gcode.send`: blocks too-high temperatures; a slider; storage |
 | `quick-actions.js` | buttons, slider, a text line refreshed by a timer from `printer.state()` |
 | `print-webhook.js` | print events, `http.post`, `notify`, an input field |
-| `cnc-pi.js` | a device driver: a GRBL CNC through [cncd](https://github.com/fu1se/cnc-pi) selected like a printer — status, jog, files, jobs, plus unlock / reset / zeroing on the Control tab |
+
+A complete device driver lives in its own repository:
+[filum-cnc-pi](https://github.com/fu1se/filum-cnc-pi). It adds a GRBL CNC through
+[cncd](https://github.com/fu1se/cnc-pi), selected like a printer. Install it with **From URL** and the raw link to
+`cnc-pi.js`.
 
 ## Testing
 

@@ -160,73 +160,60 @@ class PluginHostTest {
         assertTrue(out, out.contains("EXCLUDE_OBJECT_START NAME=PA_0.07.stl_id_3_copy_0\nSET_PRESSURE_ADVANCE ADVANCE=0.07"))
         assertEquals("M104 S240", await<String?> { host.filterGcode("M104 S240", it) })
         assertNull(await<String?> { host.filterGcode("M104 S400", it) })
-        assertEquals(3, host.sections.value.size)  // quick-actions, temperature-guard, print-webhook (cnc-pi — только когда выбран)
+        assertEquals(3, host.sections.value.size)  // quick-actions, temperature-guard, print-webhook
     }
 
-    @Test fun cncPiDriver() {
-        var state = "Idle"
-        var jobJson = """{"name":null,"running":false,"paused":false,"done":0,"total":0,"elapsed":0}"""
-        var down = false
-        fake.httpHandler = { method, url, _ ->
-            if (down) throw java.io.IOException("connect timed out")
-            when {
-                url.startsWith("http://pi:8080/api/status") -> 200 to """{"ok":true,"s":{"connected":true,"state":"$state","wpos":[1,2.5,-0.1],"feed":0,"spindle":0,"ov":[100,100,100],"message":""},"job":$jobJson}"""
-                url.startsWith("http://pi:8080/api/files") -> 200 to """{"ok":true,"files":[{"name":"test-square.nc","size":174,"mtime":1.5}]}"""
-                url.startsWith("http://pi:8080/api/camera") -> 200 to """{"ok":true,"available":true}"""
-                method == "POST" -> 200 to """{"ok":true}"""
-                else -> 404 to "not found"
-            }
-        }
-        assertNull(load(java.io.File("src/main/assets/plugins/cnc-pi.js").readText()))
-        assertEquals(listOf(DeviceType("cnc-pi", "ЧПУ (cnc-pi)", "192.168.0.50:8080")), host.devices.value)
-        assertTrue(host.sections.value.isEmpty())   // пока ЧПУ не выбрано — плагин ничего не показывает
-
+    @Test fun deviceDriver() {
+        val driver = header("toy", "device", "http") + """
+            let pos = [0, 0, 0], addr = '', running = null
+            const send = extra => filum.device.update(Object.assign({ connected: true, state: running ? 'printing' : 'standby',
+                status: 'Toy ' + addr, position: pos, file: running }, extra || {}))
+            filum.device.register({
+              name: 'Toy machine', addressHint: '10.0.0.1:80',
+              connect(a) { addr = a; send() },
+              disconnect() { addr = '' },
+              command(s) { filum.device.log('<', 'ok ' + s) },
+              jog(axis, d, feed) { pos['XYZ'.indexOf(axis)] += d; send() },
+              home() { pos = [0, 0, 0]; send() },
+              files() { return [{ path: 'part.nc', size: 10 }] },
+              start(p) { running = p; send({ progress: 0 }) },
+              stop() {
+                try { filum.http.get('http://down/') } catch (e) { send({ message: 'caught: ' + e.message }); return }
+              },
+            })
+        """
         val states = mutableListOf<JSONObject>()
+        val logs = mutableListOf<String>()
         val listener = object : app.filum.data.DeviceListener {
             override fun onState(state: JSONObject) { synchronized(states) { states += state } }
-            override fun onLog(dir: Char, text: String) {}
+            override fun onLog(dir: Char, text: String) { synchronized(logs) { logs += "$dir $text" } }
         }
-        host.deviceConnect("cnc-pi", "pi:8080?token=s3cret", listener); host.flush()
-        val first = synchronized(states) { states.last() }
-        assertTrue(first.toString(), first.getBoolean("connected"))
-        assertEquals("standby", first.getString("state"))
-        assertEquals("Простой", first.getString("status"))
-        assertEquals(2.5, first.getJSONArray("position").getDouble(1), 1e-9)
-        assertEquals("http://pi:8080/camera/stream?token=s3cret", first.getString("camera"))
-        assertTrue(fake.requests.all { "token=s3cret" in it })
-        assertEquals("ЧПУ", host.sections.value.single().title)
+        // устройство выбрано раньше, чем загрузился плагин: подключится после register()
+        host.deviceConnect("toy", "10.0.0.7:80", listener); host.flush()
+        assertFalse(synchronized(states) { states.last() }.getBoolean("connected"))
+        assertNull(load(driver)); host.flush()
+        assertEquals(listOf(DeviceType("toy", "Toy machine", "10.0.0.1:80")), host.devices.value)
+        assertEquals("Toy 10.0.0.7:80", synchronized(states) { states.last() }.getString("status"))
 
-        fake.requests.clear()
-        host.deviceCall("cnc-pi", "jog", arrayOf("X", 10.0, 6000)); host.flush()
-        assertTrue(fake.requests.toString(), fake.requests.any { it.startsWith("POST http://pi:8080/api/jog") && it.contains("\"X\":10") && it.contains("\"feed\":1000") })
+        host.deviceCall("toy", "jog", arrayOf("Y", 2.5, 1000)); host.flush()
+        assertEquals(2.5, synchronized(states) { states.last() }.getJSONArray("position").getDouble(1), 1e-9)
+        host.deviceCall("toy", "command", arrayOf("G0 X1")); host.flush()
+        assertEquals(listOf("< ok G0 X1"), synchronized(logs) { logs.toList() })
+        val files = await<Any?> { cb -> host.deviceCall("toy", "files", emptyArray(), cb) } as org.json.JSONArray
+        assertEquals("part.nc", files.getJSONObject(0).getString("path"))
+        host.deviceCall("toy", "start", arrayOf("part.nc")); host.flush()
+        assertEquals("printing", synchronized(states) { states.last() }.getString("state"))
 
-        val files = await<Any?> { cb -> host.deviceCall("cnc-pi", "files", emptyArray(), cb) } as org.json.JSONArray
-        assertEquals("test-square.nc", files.getJSONObject(0).getString("path"))
+        // ошибка сервиса (сеть) — обычный JS Error, драйвер его ловит
+        fake.httpHandler = { _, _, _ -> throw java.io.IOException("no route to host") }
+        host.deviceCall("toy", "stop", emptyArray()); host.flush()
+        assertEquals("caught: no route to host", synchronized(states) { states.last() }.getString("message"))
 
-        host.deviceCall("cnc-pi", "start", arrayOf("test-square.nc")); host.flush()
-        assertTrue(fake.requests.toString(), fake.requests.any { it.contains("/api/job") && it.contains("\"action\":\"start\"") })
-
-        // задание идёт: для приложения это «печать» с прогрессом; пауза — пауза задания
-        state = "Run"; jobJson = """{"name":"test-square.nc","running":true,"paused":false,"done":30,"total":120,"elapsed":60}"""
-        fake.requests.clear()
-        host.deviceCall("cnc-pi", "pause", emptyArray()); host.flush()
-        assertTrue(fake.requests.toString(), fake.requests.any { it.contains("/api/job") && it.contains("\"action\":\"pause\"") })
-        val run = synchronized(states) { states.last() }
-        assertEquals("printing", run.getString("state"))
-        assertEquals(25, run.getInt("progress"))
-        assertEquals(180, run.getInt("timeLeft"))
-
-        state = "Alarm"; jobJson = """{"name":null,"running":false,"paused":false,"done":0,"total":0,"elapsed":0}"""
-        host.deviceCall("cnc-pi", "command", arrayOf("\$X")); host.flush()
-        assertEquals("АВАРИЯ", synchronized(states) { states.last() }.getString("status"))
-
-        down = true
-        host.deviceCall("cnc-pi", "command", arrayOf("G0 X0")); host.flush()
-        val off = synchronized(states) { states.last() }
-        assertFalse(off.getBoolean("connected"))
-        assertTrue(off.toString(), off.getString("message").contains("connect timed out"))
-
-        host.deviceDisconnect("cnc-pi"); host.flush()
-        assertTrue(host.sections.value.isEmpty())
+        // плагин выключили — устройство «не подключено», тип пропал из списка
+        host.unload("toy"); host.flush()
+        assertFalse(synchronized(states) { states.last() }.getBoolean("connected"))
+        assertTrue(host.devices.value.isEmpty())
+        // без разрешения device зарегистрировать устройство нельзя
+        assertNotNull(load(header("nodev") + "filum.device.register({ connect() {} })"))
     }
 }
