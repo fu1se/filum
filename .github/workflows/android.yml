@@ -24,7 +24,19 @@ jobs:
       - uses: gradle/actions/setup-gradle@v4
       - name: Unit tests
         run: ./gradlew testDebugUnitTest
+      - name: Release signing key
+        # постоянный ключ из секретов: все релизы подписаны одним ключом и ставятся поверх друг друга.
+        # В форках и pull request секретов нет — тогда сборка подписывается отладочным ключом.
+        env:
+          KEYSTORE_B64: ${{ secrets.FILUM_KEYSTORE_B64 }}
+        run: |
+          if [ -n "$KEYSTORE_B64" ]; then
+            echo "$KEYSTORE_B64" | base64 -d > "$RUNNER_TEMP/filum-release.jks"
+            echo "FILUM_KEYSTORE=$RUNNER_TEMP/filum-release.jks" >> "$GITHUB_ENV"
+          fi
       - name: Build APK
+        env:
+          FILUM_KEYSTORE_PASSWORD: ${{ secrets.FILUM_KEYSTORE_PASSWORD }}
         run: ./gradlew assembleRelease
       - name: Rename APK
         run: cp app/build/outputs/apk/release/app-release.apk filum-${GITHUB_REF_NAME//\//-}.apk

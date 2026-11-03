@@ -216,6 +216,12 @@ A complete device driver lives in its own repository:
 [cncd](https://github.com/fu1se/cnc-pi), selected like a printer. Install it with **From URL** and the raw link to
 `cnc-pi.js`.
 
+## Publishing in the catalog
+
+[`plugins/catalog.json`](../plugins/catalog.json) lists verified plugins. Each entry pins the file to a commit URL
+and a SHA-256, so what users install is exactly what was reviewed. To add a plugin, open a pull request with an
+entry; [plugins/README.md](../plugins/README.md) has the format.
+
 ## Testing
 
 `PluginHostTest` runs the engine on the JVM with a fake printer: `./gradlew testDebugUnitTest`. To try a plugin

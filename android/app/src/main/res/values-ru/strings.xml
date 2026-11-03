@@ -535,4 +535,33 @@
     <string name="device_klipper">3D-принтер (Klipper / Moonraker)</string>
     <string name="device_missing">%1$s (плагин не установлен)</string>
     <string name="device_address">Адрес устройства</string>
+    <!-- Обновление приложения -->
+    <string name="app_version">Filum %1$s</string>
+    <string name="update_check">Проверить обновления</string>
+    <string name="update_title">Обновление приложения</string>
+    <string name="update_available">Доступна Filum %1$s</string>
+    <string name="update_downloading">Скачиваю Filum %1$s…</string>
+    <string name="update_ready">Filum %1$s скачана</string>
+    <string name="update_latest">У вас последняя версия (%1$s).</string>
+    <string name="update_current">Установлена %1$s → новая %2$s · %3$.1f МБ</string>
+    <string name="update_download_failed">Не удалось скачать: %1$s</string>
+    <string name="update_other_key">Эта версия подписана другим ключом, чем установленное приложение, поэтому Android не поставит её поверх. Так бывает один раз — при переходе со сборок до 0.2.2. Удалите Filum и установите новую версию со страницы релиза (принтеры, настройки и плагины придётся задать заново).</string>
+    <string name="update_need_permission">Разрешите Filum устанавливать приложения — Android спрашивает это один раз. Потом вернитесь и нажмите «Установить».</string>
+    <string name="update_install_hint">Откроется установщик Android. Настройки, принтеры и плагины сохранятся.</string>
+    <string name="update_now">Обновить</string>
+    <string name="update_later">Позже</string>
+    <string name="update_skip">Пропустить версию</string>
+    <string name="update_allow">Разрешить</string>
+    <string name="update_install">Установить</string>
+    <string name="update_open_page">Страница релиза</string>
+    <!-- Каталог плагинов -->
+    <string name="catalog_title">Проверенные плагины</string>
+    <string name="catalog_error">Не удалось загрузить каталог: %1$s</string>
+    <string name="catalog_empty">Каталог пока пуст.</string>
+    <string name="catalog_installed">Установлен</string>
+    <string name="catalog_update_to">Обновить до %1$s</string>
+    <string name="catalog_update_n">Обновить все (%1$d)</string>
+    <string name="catalog_update_all">Обновить все</string>
+    <string name="catalog_updates_q">Доступны обновления плагинов: %1$d</string>
+    <string name="catalog_failed">%1$s: %2$s</string>
 </resources>

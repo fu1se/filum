@@ -16,11 +16,22 @@ android {
         versionName = "0.2.1"
     }
 
+    // Ключ релизов: путь и пароль из окружения (на GitHub — из секретов репозитория). Без них — отладочный ключ,
+    // чтобы локальная release-сборка тоже ставилась на телефон.
+    val releaseKeystore = System.getenv("FILUM_KEYSTORE")?.let { file(it) }?.takeIf { it.exists() }
+    signingConfigs {
+        if (releaseKeystore != null) create("release") {
+            storeFile = releaseKeystore
+            storePassword = System.getenv("FILUM_KEYSTORE_PASSWORD")
+            keyAlias = System.getenv("FILUM_KEY_ALIAS") ?: "filum"
+            keyPassword = System.getenv("FILUM_KEY_PASSWORD") ?: System.getenv("FILUM_KEYSTORE_PASSWORD")
+        }
+    }
+
     buildTypes {
         release {
             isMinifyEnabled = false
-            // Debug-ключ, чтобы release-APK можно было сразу установить на телефон
-            signingConfig = signingConfigs.getByName("debug")
+            signingConfig = signingConfigs.findByName("release") ?: signingConfigs.getByName("debug")
         }
     }
     compileOptions {
@@ -32,6 +43,7 @@ android {
     }
     buildFeatures {
         compose = true
+        buildConfig = true  // VERSION_NAME — для проверки обновлений
     }
 }
 

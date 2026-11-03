@@ -4,6 +4,9 @@ import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.clickable
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.foundation.layout.size
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
@@ -59,6 +62,8 @@ import app.filum.plugins.PluginItem
 import app.filum.plugins.PluginMeta
 import app.filum.plugins.PluginSection
 import app.filum.plugins.Plugins
+import app.filum.update.CatalogPlugin
+import app.filum.update.Versions
 import app.filum.tr
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -148,8 +153,41 @@ fun PluginsScreen(onClose: () -> Unit) {
     var confirmDelete by remember { mutableStateOf<PluginMeta?>(null) }
     var openLog by remember { mutableStateOf<String?>(null) }
 
+    // каталог проверенных плагинов из репозитория Filum: перечитывается при каждом открытии
+    val catalog by Plugins.catalog.collectAsStateWithLifecycle()
+    LaunchedEffect(Unit) { Plugins.refreshCatalog() }
+    val installedVersions = plugins.associate { it.meta.id to it.meta.version }
+    val updates = catalog.plugins.orEmpty().filter { c ->
+        installedVersions[c.id]?.let { Versions.isNewer(c.version, it) } == true
+    }
+    var busyId by remember { mutableStateOf<String?>(null) }
+    var askUpdates by remember { mutableStateOf(false) }
+    var prompted by remember { mutableStateOf(false) }
+    LaunchedEffect(updates.map { it.id }) { if (updates.isNotEmpty() && !prompted) { askUpdates = true; prompted = true } }
+
     fun offer(src: String) {
         try { pending = Plugins.inspect(src) to src } catch (e: Exception) { error = tr(R.string.plugin_bad_file, e.message ?: "") }
+    }
+
+    /** Скачать плагин из каталога (с проверкой SHA-256) и показать подтверждение с разрешениями. */
+    fun fromCatalog(c: CatalogPlugin) = scope.launch {
+        busyId = c.id
+        val r = withContext(Dispatchers.IO) { runCatching { Plugins.downloadVerified(c) } }
+        busyId = null
+        r.onSuccess(::offer).onFailure { error = tr(R.string.catalog_failed, c.name, it.message ?: "") }
+    }
+
+    /** Обновить всё: без новых разрешений — сразу; с новыми — через подтверждение по одному. */
+    fun updateAll() = scope.launch {
+        for (c in updates) {
+            busyId = c.id
+            val r = withContext(Dispatchers.IO) { runCatching { Plugins.downloadVerified(c) } }
+            busyId = null
+            val src = r.getOrNull()
+            if (src == null) { error = tr(R.string.catalog_failed, c.name, r.exceptionOrNull()?.message ?: ""); continue }
+            val old = plugins.firstOrNull { it.meta.id == c.id }?.meta?.grants.orEmpty()
+            if (PluginMeta.parse(src).grants.all { it in old }) Plugins.install(src) else { offer(src); break }
+        }
     }
 
     val pick = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri: Uri? ->
@@ -178,6 +216,7 @@ fun PluginsScreen(onClose: () -> Unit) {
                     OutlinedButton(onClick = { showExamples = true }) { Text(tr(R.string.plugin_examples)) }
                 }
                 Text(tr(R.string.plugins_hint), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                CatalogSection(catalog, installedVersions, busyId, updates.size, ::fromCatalog, ::updateAll)
                 if (plugins.isEmpty()) Text(tr(R.string.plugins_none), color = MaterialTheme.colorScheme.onSurfaceVariant)
                 for (p in plugins) Card(Modifier.fillMaxWidth()) {
                     Column(Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
@@ -210,6 +249,18 @@ fun PluginsScreen(onClose: () -> Unit) {
             }
         }
     }
+
+    if (askUpdates) AlertDialog(
+        onDismissRequest = { askUpdates = false },
+        title = { Text(tr(R.string.catalog_updates_q, updates.size)) },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                for (c in updates) Text("• ${c.name}: ${installedVersions[c.id]} → ${c.version}")
+            }
+        },
+        confirmButton = { TextButton(onClick = { askUpdates = false; updateAll() }) { Text(tr(R.string.catalog_update_all)) } },
+        dismissButton = { TextButton(onClick = { askUpdates = false }) { Text(tr(R.string.update_later)) } },
+    )
 
     pending?.let { (meta, src) ->
         val update = plugins.firstOrNull { it.meta.id == meta.id }
@@ -322,4 +373,50 @@ private fun grantText(g: String) = when (g) {
     GRANT_NOTIFY -> tr(R.string.grant_notify)
     GRANT_DEVICE -> tr(R.string.grant_device)
     else -> g
+}
+
+/** Каталог проверенных плагинов: установить, обновить (версия новее установленной) или «установлен». */
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+private fun CatalogSection(
+    catalog: Plugins.CatalogState,
+    installed: Map<String, String>,
+    busyId: String?,
+    updates: Int,
+    onInstall: (CatalogPlugin) -> Unit,
+    onUpdateAll: () -> Unit,
+) {
+    Row(verticalAlignment = Alignment.CenterVertically) {
+        Text(tr(R.string.catalog_title), style = MaterialTheme.typography.titleMedium, modifier = Modifier.weight(1f))
+        if (catalog.loading) CircularProgressIndicator(Modifier.size(18.dp), strokeWidth = 2.dp)
+        else if (updates > 0) FilledTonalButton(onClick = onUpdateAll, enabled = busyId == null) {
+            Text(tr(R.string.catalog_update_n, updates))
+        }
+    }
+    catalog.error?.let { Text(tr(R.string.catalog_error, it), color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall) }
+    val list = catalog.plugins
+    if (list != null && list.isEmpty()) Text(tr(R.string.catalog_empty), style = MaterialTheme.typography.bodySmall)
+    for (c in list.orEmpty()) Card(Modifier.fillMaxWidth()) {
+        Column(Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Column(Modifier.weight(1f)) {
+                    Text(c.name, style = MaterialTheme.typography.titleSmall)
+                    Text(listOf(c.version, c.author).filter { it.isNotBlank() }.joinToString(" · "),
+                        style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                }
+                val have = installed[c.id]
+                when {
+                    busyId == c.id -> CircularProgressIndicator(Modifier.size(20.dp), strokeWidth = 2.dp)
+                    have == null -> FilledTonalButton(onClick = { onInstall(c) }, enabled = busyId == null) { Text(tr(R.string.plugin_install)) }
+                    Versions.isNewer(c.version, have) -> FilledTonalButton(onClick = { onInstall(c) }, enabled = busyId == null) {
+                        Text(tr(R.string.catalog_update_to, c.version))
+                    }
+                    else -> Text(tr(R.string.catalog_installed), style = MaterialTheme.typography.labelMedium, color = Accent)
+                }
+            }
+            if (c.description.isNotBlank()) Text(c.description, style = MaterialTheme.typography.bodySmall, maxLines = 4,
+                overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis)
+            GrantsLine(c.grants.toSet())
+        }
+    }
 }

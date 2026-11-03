@@ -18,6 +18,9 @@ import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.RequestBody.Companion.toRequestBody
+import app.filum.update.CatalogPlugin
+import app.filum.update.FilumRepo
+import app.filum.update.sha256Hex
 import org.json.JSONObject
 import java.io.File
 import java.util.concurrent.CountDownLatch
@@ -103,6 +106,48 @@ object Plugins {
     }
 
     fun source(id: String): String? = File(dir, "$id.js").takeIf { it.exists() }?.readText()
+
+    // ---------- каталог проверенных плагинов ----------
+
+    data class CatalogState(val loading: Boolean = false, val plugins: List<CatalogPlugin>? = null, val error: String? = null)
+
+    private val _catalog = MutableStateFlow(CatalogState())
+    val catalog: StateFlow<CatalogState> = _catalog.asStateFlow()
+    private val net = OkHttpClient.Builder().connectTimeout(10, TimeUnit.SECONDS).readTimeout(30, TimeUnit.SECONDS).build()
+
+    private fun fetch(url: String): ByteArray =
+        net.newCall(Request.Builder().url(url).header("User-Agent", "Filum").build()).execute().use { r ->
+            if (!r.isSuccessful) throw java.io.IOException("HTTP ${r.code}")
+            r.body!!.bytes()
+        }
+
+    /** Перечитывает каталог из репозитория Filum (при каждом открытии менеджера). */
+    fun refreshCatalog() {
+        _catalog.update { it.copy(loading = true, error = null) }
+        Thread {
+            val r = runCatching { CatalogPlugin.parseCatalog(String(fetch(FilumRepo.PLUGIN_CATALOG), Charsets.UTF_8)) }
+            _catalog.update { old ->
+                r.fold({ CatalogState(plugins = it) }, { CatalogState(plugins = old.plugins, error = it.message ?: it.javaClass.simpleName) })
+            }
+        }.apply { isDaemon = true }.start()
+    }
+
+    /**
+     * Скачивает плагин из каталога и проверяет его: SHA-256 должна совпасть с каталогом, id в заголовке — с id
+     * в каталоге. Бросает исключение с понятным текстом. Вызывать не из главного потока.
+     */
+    fun downloadVerified(p: CatalogPlugin): String {
+        val bytes = fetch(p.url)
+        val sum = sha256Hex(bytes)
+        if (sum != p.sha256) throw SecurityException("checksum mismatch: the file differs from the catalog ($sum)")
+        val src = String(bytes, Charsets.UTF_8)
+        val meta = PluginMeta.parse(src)
+        if (meta.id != p.id) throw SecurityException("plugin id '${meta.id}' doesn't match the catalog ('${p.id}')")
+        return src
+    }
+
+    /** Установленная версия плагина [id] или null. */
+    fun installedVersion(id: String): String? = host.plugins.value.firstOrNull { it.meta.id == id }?.meta?.version
 
     /** Примеры из assets/plugins. */
     fun examples(): List<Pair<PluginMeta, String>> =

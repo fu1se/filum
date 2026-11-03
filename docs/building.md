@@ -38,8 +38,13 @@ In the Android emulator, add a printer with the address `10.0.2.2`, which is you
 
 ### Release builds
 
-`./gradlew assembleRelease` signs with the debug key so the APK installs directly. For a store release, configure
-your own signing in `app/build.gradle.kts`.
+`./gradlew assembleRelease` signs with the release key when `FILUM_KEYSTORE` (path) and `FILUM_KEYSTORE_PASSWORD`
+are set; otherwise it uses the debug key, so local builds still install. Optional: `FILUM_KEY_ALIAS` (default
+`filum`) and `FILUM_KEY_PASSWORD` (default: the store password).
+
+CI signs releases with the permanent key from the repository secrets `FILUM_KEYSTORE_B64` (the keystore,
+base64) and `FILUM_KEYSTORE_PASSWORD`. All releases must share this key, otherwise in-app updates can't install
+over the previous version. Forks and pull requests have no secrets and get debug-signed builds.
 
 ## Slicer server
 

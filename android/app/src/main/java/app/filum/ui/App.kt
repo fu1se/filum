@@ -97,6 +97,9 @@ fun App(vm: PrinterViewModel, slicerVm: SlicerViewModel) {
     var showSettings by rememberSaveable { mutableStateOf(settings.host.isBlank()) }
     var addingPrinter by rememberSaveable { mutableStateOf(false) }
     var showPlugins by rememberSaveable { mutableStateOf(false) }
+    // обновление приложения: найденный тихой проверкой релиз или ручная проверка из настроек
+    var updateFound by remember { mutableStateOf<app.filum.update.AppRelease?>(null) }
+    var updateManual by rememberSaveable { mutableStateOf(false) }
     var printerMenu by remember { mutableStateOf(false) }
     val printers by vm.printers.collectAsStateWithLifecycle()
     val activeId by vm.activeId.collectAsStateWithLifecycle()
@@ -215,6 +218,8 @@ fun App(vm: PrinterViewModel, slicerVm: SlicerViewModel) {
     }
 
     if (showPlugins) PluginsScreen(onClose = { showPlugins = false })
+    LaunchedEffect(Unit) { updateFound = backgroundUpdateCheck(context) }
+    if (updateFound != null || updateManual) UpdateDialog(found = updateFound) { updateFound = null; updateManual = false }
     if (showSettings) {
         val adding = addingPrinter || settings.host.isBlank()
         SettingsDialog(
@@ -223,6 +228,7 @@ fun App(vm: PrinterViewModel, slicerVm: SlicerViewModel) {
             canDelete = !adding && printers.size > 1,
             canCancel = printers.isNotEmpty(),
             onDismiss = { showSettings = false; addingPrinter = false },
+            onCheckUpdates = { showSettings = false; addingPrinter = false; updateManual = true },
             onDelete = {
                 activeId?.let { vm.deletePrinter(it) }
                 showSettings = false; slicerVm.reload()
@@ -247,6 +253,7 @@ private fun SettingsDialog(
     onDismiss: () -> Unit,
     onDelete: () -> Unit,
     onSave: (AppSettings) -> Unit,
+    onCheckUpdates: () -> Unit = {},
 ) {
     var host by remember { mutableStateOf(initial.host) }
     var name by remember { mutableStateOf(initial.name) }
@@ -350,6 +357,11 @@ private fun SettingsDialog(
                             style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                     }
                     androidx.compose.material3.Switch(checked = expert, onCheckedChange = { expert = it })
+                }
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text(tr(R.string.app_version, app.filum.BuildConfig.VERSION_NAME), style = MaterialTheme.typography.titleSmall,
+                        modifier = Modifier.weight(1f))
+                    TextButton(onClick = onCheckUpdates) { Text(tr(R.string.update_check)) }
                 }
                 Text(tr(R.string.theme), style = MaterialTheme.typography.titleSmall)
                 ThemeMode.entries.forEach { t ->

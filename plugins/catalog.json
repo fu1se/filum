@@ -1,0 +1,16 @@
+{
+  "version": 1,
+  "plugins": [
+    {
+      "id": "cnc-pi",
+      "name": "ЧПУ (cnc-pi)",
+      "description": "A GRBL CNC run by cncd (github.com/fu1se/cnc-pi), selected like a printer: status, jog, homing, files, jobs, camera; unlock, reset, work zero and an offset after homing.",
+      "author": "fu1se",
+      "version": "1.4",
+      "homepage": "https://github.com/fu1se/filum-cnc-pi",
+      "url": "https://raw.githubusercontent.com/fu1se/filum-cnc-pi/ba51f8f/cnc-pi.js",
+      "sha256": "d9fc1a6d7408057df470dbdc4f6132971561d5a2b064a0e275c7b94cfe591e9b",
+      "grants": ["http", "device"]
+    }
+  ]
+}

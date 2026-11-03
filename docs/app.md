@@ -93,12 +93,29 @@ temperatures.
 Turn everything off with the **Notifications** switch in ⚙. The service starts with the app, after a reboot and
 after an update.
 
+## Updates
+
+Filum checks GitHub for a new release when it starts (at most every 12 hours). You can also check by hand: ⚙ →
+**Check for updates**. To update:
+1. Tap **Update**: the APK is downloaded inside the app.
+2. The first time, allow Filum to install apps. Android asks for this once.
+3. The Android installer opens. Settings, printers and plugins are kept.
+
+Releases from 0.2.2 on are signed with one permanent key. Builds before that were signed with a different key each,
+so going from 0.2.1 or older to 0.2.2 needs one manual reinstall. The app detects this and says so instead of
+failing.
+
 ## Plugins
 
 The puzzle icon in the top bar opens the plugin manager:
 - **Install.** From a file, from a URL, or from the bundled examples. Before installing, the manager shows the
   plugin's permissions.
 - **Manage.** Turn plugins on and off, read their log, delete them.
+
+The manager also shows **Verified plugins** from the catalog in this repository ([`plugins/catalog.json`](../plugins/catalog.json)):
+- the catalog is re-read every time the manager opens;
+- updates for installed plugins are offered automatically;
+- each download is checked against the catalog's SHA-256.
 
 Plugin controls appear on the Control tab. How to write plugins: [plugins.md](plugins.md).
 

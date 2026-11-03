@@ -536,4 +536,33 @@
     <string name="device_klipper">3D printer (Klipper / Moonraker)</string>
     <string name="device_missing">%1$s (plugin not installed)</string>
     <string name="device_address">Device address</string>
+    <!-- Обновление приложения -->
+    <string name="app_version">Filum %1$s</string>
+    <string name="update_check">Check for updates</string>
+    <string name="update_title">App update</string>
+    <string name="update_available">Filum %1$s is available</string>
+    <string name="update_downloading">Downloading Filum %1$s…</string>
+    <string name="update_ready">Filum %1$s is downloaded</string>
+    <string name="update_latest">You have the latest version (%1$s).</string>
+    <string name="update_current">Installed %1$s → new %2$s · %3$.1f MB</string>
+    <string name="update_download_failed">Download failed: %1$s</string>
+    <string name="update_other_key">This version is signed with a different key than the installed app, so Android won\'t install it over it. This happens once, after builds from before 0.2.2. Uninstall Filum and install the new version from the release page (printers, settings and plugins will need to be set up again).</string>
+    <string name="update_need_permission">Allow Filum to install apps: Android asks for this once. Then come back and tap Install.</string>
+    <string name="update_install_hint">The Android installer will open. Settings, printers and plugins are kept.</string>
+    <string name="update_now">Update</string>
+    <string name="update_later">Later</string>
+    <string name="update_skip">Skip this version</string>
+    <string name="update_allow">Allow</string>
+    <string name="update_install">Install</string>
+    <string name="update_open_page">Release page</string>
+    <!-- Каталог плагинов -->
+    <string name="catalog_title">Verified plugins</string>
+    <string name="catalog_error">Couldn\'t load the catalog: %1$s</string>
+    <string name="catalog_empty">The catalog is empty for now.</string>
+    <string name="catalog_installed">Installed</string>
+    <string name="catalog_update_to">Update to %1$s</string>
+    <string name="catalog_update_n">Update all (%1$d)</string>
+    <string name="catalog_update_all">Update all</string>
+    <string name="catalog_updates_q">Plugin updates available: %1$d</string>
+    <string name="catalog_failed">%1$s: %2$s</string>
 </resources>
