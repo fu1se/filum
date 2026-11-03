@@ -60,12 +60,12 @@ private val presets = listOf(
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
-fun ControlScreen(state: PrinterState, connected: Boolean, client: PrinterClient, slicerVm: SlicerViewModel, expert: Boolean = false) {
+fun ControlScreen(state: PrinterState, connected: Boolean, client: PrinterClient, slicerVm: SlicerViewModel, expert: Boolean = false, device: String = "") {
     val slicerUi by slicerVm.ui.collectAsStateWithLifecycle()
     var editSlot by remember { mutableStateOf<CfsSlot?>(null) }
     var tagFor by remember { mutableStateOf<TagPrefill?>(null) }
     var nozzleAsk by remember { mutableStateOf<Double?>(null) }
-    LaunchedEffect(Unit) { if (slicerUi.cfs == null) slicerVm.loadCfs() }
+    LaunchedEffect(state.caps.cfs) { if (slicerUi.cfs == null && state.caps.cfs) slicerVm.loadCfs() }
     val context = androidx.compose.ui.platform.LocalContext.current
     LaunchedEffect(slicerUi.message) {
         slicerUi.message?.let { android.widget.Toast.makeText(context, it, android.widget.Toast.LENGTH_LONG).show(); slicerVm.consumeMessage() }
@@ -80,7 +80,7 @@ fun ControlScreen(state: PrinterState, connected: Boolean, client: PrinterClient
         Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(12.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
-        Section(tr(R.string.heating)) {
+        if (caps.heaters) Section(tr(R.string.heating)) {
             FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 presets.forEach { p ->
                     ChipButton(p.name, enabled = connected) {
@@ -101,7 +101,7 @@ fun ControlScreen(state: PrinterState, connected: Boolean, client: PrinterClient
             }
         }
 
-        Section(tr(R.string.fans)) {
+        if (caps.crealityFans || caps.stdFan) Section(tr(R.string.fans)) {
             PercentSlider(tr(R.string.fan_part), state.modelFanPct, 0..100, connected) { client.setFan(0, it) }
             if (caps.auxFan) PercentSlider(tr(R.string.fan_aux), state.auxFanPct, 0..100, connected) { client.setFan(1, it) }
             if (caps.chamberFan) PercentSlider(tr(R.string.fan_chamber), state.caseFanPct, 0..100, connected) { client.setFan(2, it) }
@@ -128,7 +128,8 @@ fun ControlScreen(state: PrinterState, connected: Boolean, client: PrinterClient
                 )
             }
             FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                listOf(0.1, 1.0, 10.0, 50.0).forEach { s ->
+                // ЧПУ и прочие устройства без Klipper — ещё и 0.01 мм
+                (if (caps.klipper) listOf(0.1, 1.0, 10.0, 50.0) else listOf(0.01, 0.1, 1.0, 10.0, 50.0)).forEach { s ->
                     ChipButton(tr(R.string.mm_fmt, if (s < 1) s else s.toInt()), selected = step == s) { step = s }
                 }
             }
@@ -153,7 +154,7 @@ fun ControlScreen(state: PrinterState, connected: Boolean, client: PrinterClient
                     JogButton(Icons.Default.ArrowDownward, "Z−", canMove) { client.move('Z', -step, 600) }
                 }
             }
-            Text(
+            if (caps.klipper) Text(
                 tr(R.string.z_hint),
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
@@ -161,7 +162,7 @@ fun ControlScreen(state: PrinterState, connected: Boolean, client: PrinterClient
             FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 FilledTonalButton(onClick = { client.home() }, enabled = canMove, border = tonalBorder(canMove)) { Text(tr(R.string.home_all)) }
                 OutlinedButton(onClick = { client.home("Z") }, enabled = canMove) { Text(tr(R.string.home_z)) }
-                OutlinedButton(onClick = { client.motorsOff() }, enabled = canMove) { Text(tr(R.string.motors_off)) }
+                if (caps.klipper) OutlinedButton(onClick = { client.motorsOff() }, enabled = canMove) { Text(tr(R.string.motors_off)) }
             }
         }
 
@@ -193,11 +194,11 @@ fun ControlScreen(state: PrinterState, connected: Boolean, client: PrinterClient
             }
         }
 
-        if (expert) ZOffsetSection(state, connected, client)
+        if (expert && caps.klipper) ZOffsetSection(state, connected, client)
 
-        PluginSections()
+        PluginSections(device)
 
-        Section(tr(R.string.extruder)) {
+        if (caps.heaters) Section(tr(R.string.extruder)) {
             Text(
                 tr(R.string.extruder_hint),
                 style = MaterialTheme.typography.bodySmall,

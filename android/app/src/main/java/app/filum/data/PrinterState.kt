@@ -38,6 +38,9 @@ data class PrinterState(
     val flowPct: Int? = null,
     val hostname: String? = null,
     val caps: PrinterCaps = PrinterCaps(),
+    /** Устройство на драйвере-плагине: свой текст статуса (например «АВАРИЯ») и поток камеры. */
+    val statusOverride: String? = null,
+    val cameraUrl: String? = null,
 ) {
     val isPrinting get() = printState == "printing"
     val isPaused get() = printState == "paused"
@@ -45,7 +48,7 @@ data class PrinterState(
     val isError get() = printState == "error" || (klippyState != null && klippyState != "ready")
 
     val statusText: String
-        get() = when {
+        get() = statusOverride ?: when {
             klippyState == null -> tr(R.string.status_no_data)
             klippyState == "startup" -> tr(R.string.status_klipper_starting)
             klippyState == "shutdown" -> tr(R.string.klipper_shutdown)
@@ -63,6 +66,29 @@ data class PrinterState(
         }
 
     companion object {
+        /** Состояние от драйвера устройства (см. [DeviceListener.onState]). */
+        fun fromDevice(o: JSONObject, caps: PrinterCaps): PrinterState {
+            val pos = o.optJSONArray("position")
+            val state = o.optString("state").ifBlank { "standby" }
+            return PrinterState(
+                klippyState = "ready",
+                printState = state,
+                printMessage = o.optString("message").ifBlank { null },
+                fileName = o.optString("file").ifBlank { null },
+                progress = o.dbl("progress")?.toInt(),
+                jobTimeSec = o.dbl("printTime")?.toLong(),
+                leftTimeSec = o.dbl("timeLeft")?.toLong(),
+                position = pos?.let { "X %.3f  Y %.3f  Z %.3f".format(it.optDouble(0), it.optDouble(1), it.optDouble(2)) },
+                homedAxes = o.optString("homed", "xyz"),
+                speedPct = o.dbl("speedPct")?.toInt(),
+                hostname = o.optString("name").ifBlank { null },
+                caps = caps,
+                statusOverride = o.optString("status").ifBlank { null }
+                    ?: if (!o.optBoolean("connected")) o.optString("message").ifBlank { null } else null,
+                cameraUrl = o.optString("camera").ifBlank { null },
+            )
+        }
+
         fun from(o: Map<String, JSONObject>, hostname: String?, caps: PrinterCaps = PrinterCaps()): PrinterState {
             val ps = o["print_stats"]
             val sd = o["virtual_sdcard"]

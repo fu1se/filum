@@ -1,6 +1,7 @@
 package app.filum
 
 import app.filum.data.ConnState
+import app.filum.plugins.PluginDeviceBackend
 import app.filum.plugins.Plugins
 import app.filum.data.CrealityStatus
 import app.filum.data.Faults
@@ -48,17 +49,20 @@ data class SavedPrinter(
     val host: String,
     val cameraMode: CameraMode = CameraMode.AUTO,
     val cameraUrl: String = "",
+    /** Драйвер-плагин (id плагина) для устройств не на Klipper, например ЧПУ; пусто — Moonraker. */
+    val driver: String = "",
 ) {
     val title get() = name.ifBlank { host }
 
     fun toJson(): org.json.JSONObject = org.json.JSONObject().put("id", id).put("name", name).put("host", host)
-        .put("cameraMode", cameraMode.name).put("cameraUrl", cameraUrl)
+        .put("cameraMode", cameraMode.name).put("cameraUrl", cameraUrl).put("driver", driver)
 
     companion object {
         fun fromJson(o: org.json.JSONObject) = SavedPrinter(
             id = o.optString("id"), name = o.optString("name"), host = o.optString("host"),
             cameraMode = runCatching { CameraMode.valueOf(o.optString("cameraMode")) }.getOrDefault(CameraMode.AUTO),
             cameraUrl = o.optString("cameraUrl"),
+            driver = o.optString("driver"),
         )
     }
 }
@@ -77,6 +81,8 @@ data class AppSettings(
     val theme: ThemeMode = ThemeMode.SYSTEM,
     /** Режим эксперта: Z-offset и прочее, что легко испортить (общий для всех принтеров). */
     val expert: Boolean = false,
+    /** Драйвер-плагин активного устройства (см. [SavedPrinter.driver]). */
+    val driver: String = "",
 ) {
     /**
      * Режим камеры с учётом «Авто»: WebRTC на :8000, если принтер его поддерживает (K2, Hi, новые K1C),
@@ -118,6 +124,7 @@ class PrinterViewModel(app: Application) : AndroidViewModel(app) {
             slicerUrl = prefs.getString("slicerUrl", null)?.ifBlank { null } ?: SlicerViewModel.DEFAULT_SLICER_URL,
             notifications = prefs.getBoolean("notifications", true),
             theme = runCatching { ThemeMode.valueOf(prefs.getString("theme", "")!!) }.getOrDefault(ThemeMode.SYSTEM),
+            driver = prefs.getString("driver", "").orEmpty(),
             expert = prefs.getBoolean("expert", false),
         )
     )
@@ -162,6 +169,7 @@ class PrinterViewModel(app: Application) : AndroidViewModel(app) {
             .putString("host", p?.host.orEmpty())
             .putString("cameraMode", (p?.cameraMode ?: CameraMode.AUTO).name)
             .putString("cameraUrl", p?.cameraUrl.orEmpty())
+            .putString("driver", p?.driver.orEmpty())
             .commit()
     }
 
@@ -180,12 +188,11 @@ class PrinterViewModel(app: Application) : AndroidViewModel(app) {
     }
 
     private fun applyActive(p: SavedPrinter) {
-        val changed = p.host != _settings.value.host
-        _settings.value = _settings.value.copy(host = p.host, cameraMode = p.cameraMode, cameraUrl = p.cameraUrl, name = p.name)
+        val changed = p.host != _settings.value.host || p.driver != _settings.value.driver
+        _settings.value = _settings.value.copy(host = p.host, cameraMode = p.cameraMode, cameraUrl = p.cameraUrl, name = p.name, driver = p.driver)
         if (changed) {
             _timelapses.value = TimelapseUi()
-            if (p.host.isBlank()) { client.disconnect(); creality.disconnect() }
-            else { client.connect(p.host); creality.connect(p.host) }
+            connectTo(p.host, p.driver)
         }
     }
 
@@ -200,8 +207,7 @@ class PrinterViewModel(app: Application) : AndroidViewModel(app) {
                 .collect { (s, c) -> Plugins.onState(s, c) }
         }
         if (_settings.value.host.isNotBlank()) {
-            client.connect(_settings.value.host)
-            creality.connect(_settings.value.host)
+            connectTo(_settings.value.host, _settings.value.driver)
         }
     }
 
@@ -251,9 +257,9 @@ class PrinterViewModel(app: Application) : AndroidViewModel(app) {
     fun saveSettings(s: AppSettings, asNew: Boolean = false) {
         val list = _printers.value
         val active = _activeId.value?.takeIf { id -> !asNew && list.any { it.id == id } }
-        val entry = SavedPrinter(active ?: java.util.UUID.randomUUID().toString(), s.name.trim(), s.host, s.cameraMode, s.cameraUrl)
+        val entry = SavedPrinter(active ?: java.util.UUID.randomUUID().toString(), s.name.trim(), s.host, s.cameraMode, s.cameraUrl, s.driver)
         storePrinters(if (active != null) list.map { if (it.id == active) entry else it } else list + entry, entry.id)
-        val hostChanged = s.host != _settings.value.host
+        val hostChanged = s.host != _settings.value.host || s.driver != _settings.value.driver
         prefs.edit()
             .putString("slicerUrl", s.slicerUrl)
             .putBoolean("notifications", s.notifications)
@@ -262,15 +268,22 @@ class PrinterViewModel(app: Application) : AndroidViewModel(app) {
             .commit()  // сразу на диск: сервис уведомлений читает адрес отсюда
         if (s.host != _settings.value.host) _timelapses.value = TimelapseUi()
         _settings.value = s
-        if (hostChanged || client.connection.value == ConnState.Disconnected) {
-            if (s.host.isBlank()) client.disconnect() else client.connect(s.host)
-        }
-        if (s.host.isBlank()) creality.disconnect() else creality.connect(s.host)
+        if (hostChanged || client.connection.value == ConnState.Disconnected) connectTo(s.host, s.driver)
+        else if (s.driver.isBlank() && s.host.isNotBlank()) creality.connect(s.host)
     }
 
     fun reconnect() {
         val h = _settings.value.host
-        if (h.isNotBlank()) client.connect(h)
+        if (h.isNotBlank()) connectTo(h, _settings.value.driver, creality = false)
+    }
+
+    /** Moonraker (и службы Creality) или устройство на драйвере-плагине. */
+    private fun connectTo(host: String, driver: String, creality: Boolean = true) {
+        when {
+            host.isBlank() -> { client.disconnect(); this.creality.disconnect() }
+            driver.isNotBlank() -> { this.creality.disconnect(); client.connectDevice(PluginDeviceBackend(driver), host) }
+            else -> { client.connect(host); if (creality) this.creality.connect(host) }
+        }
     }
 
     override fun onCleared() {

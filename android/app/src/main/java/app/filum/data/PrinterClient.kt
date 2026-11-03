@@ -79,6 +79,40 @@ class PrinterClient(private val scope: CoroutineScope) {
     private var reconnectJob: Job? = null
     private var subscribeJob: Job? = null
 
+    /** Устройство на драйвере-плагине (не Moonraker); null — обычный принтер на Klipper. */
+    @Volatile private var device: DeviceBackend? = null
+    val isDevice get() = device != null
+
+    /** Подключение к устройству через драйвер (ЧПУ и т. п.) по адресу [address]. */
+    @Synchronized
+    fun connectDevice(backend: DeviceBackend, address: String) {
+        disconnectInternal()
+        url = null
+        synchronized(objects) { objects.clear() }
+        hostname = null
+        // известные возможности без объектов Klipper: экраны прячут нагрев, обдув, CFS, подсветку
+        caps = PrinterCaps(known = true)
+        _fault.value = null
+        endBusy()
+        _state.value = PrinterState(caps = caps)
+        _files.value = null
+        device = backend
+        val gen = generation
+        _connection.value = ConnState.Connecting
+        addLog('!', tr(R.string.log_connecting, address))
+        backend.connect(address, object : DeviceListener {
+            override fun onState(state: JSONObject) {
+                if (gen != generation) return
+                val s = PrinterState.fromDevice(state, caps)
+                if (s.isPrinting && _state.value.printState != "printing") _fault.value = null
+                if (_busy.value != null && s.printState != busyFromState) endBusy()
+                _state.value = s
+                _connection.value = if (state.optBoolean("connected")) ConnState.Connected else ConnState.Connecting
+            }
+            override fun onLog(dir: Char, text: String) { if (gen == generation) addLog(dir, text) }
+        })
+    }
+
     @Synchronized
     fun connect(host: String) {
         disconnectInternal()
@@ -103,6 +137,8 @@ class PrinterClient(private val scope: CoroutineScope) {
 
     private fun disconnectInternal() {
         generation++
+        device?.disconnect()
+        device = null
         reconnectJob?.cancel()
         subscribeJob?.cancel()
         ws?.close(1000, null)
@@ -292,6 +328,7 @@ class PrinterClient(private val scope: CoroutineScope) {
     /** Отправка без хуков плагинов (её же используют сами плагины). */
     fun sendRaw(script: String) {
         addLog('>', script.replace("\n", " ⏎ "))
+        device?.let { it.command(script); return }
         call("printer.gcode.script", JSONObject().put("script", script)) { _, _ -> }
     }
 
@@ -307,9 +344,12 @@ class PrinterClient(private val scope: CoroutineScope) {
     /** Строка лога плагина в консоли. */
     fun pluginLog(pluginId: String, level: Char, text: String) = addLog(if (level == 'e') '!' else '#', "[$pluginId] $text")
 
-    fun pause() = printAction(PrintAction.Pause, "printer.print.pause", tr(R.string.pause))
-    fun resume() = printAction(PrintAction.Resume, "printer.print.resume", tr(R.string.resume))
-    fun stop() = printAction(PrintAction.Cancel, "printer.print.cancel", tr(R.string.log_cancel_print))
+    fun pause() = device?.let { addLog('>', tr(R.string.pause)); it.pause() }
+        ?: printAction(PrintAction.Pause, "printer.print.pause", tr(R.string.pause))
+    fun resume() = device?.let { addLog('>', tr(R.string.resume)); it.resume() }
+        ?: printAction(PrintAction.Resume, "printer.print.resume", tr(R.string.resume))
+    fun stop() = device?.let { addLog('>', tr(R.string.log_cancel_print)); it.stop() }
+        ?: printAction(PrintAction.Cancel, "printer.print.cancel", tr(R.string.log_cancel_print))
 
     /**
      * Шлёт команду, только если предыдущая уже завершилась. Отмену можно отправить поверх паузы или
@@ -368,13 +408,15 @@ class PrinterClient(private val scope: CoroutineScope) {
     fun setSpeedPct(pct: Int) = gcode("M220 S$pct")
     fun setFlowPct(pct: Int) = gcode("M221 S$pct")
 
-    fun home(axes: String = "") = gcode(if (axes.isEmpty()) "G28" else "G28 $axes")
-    fun move(axis: Char, dist: Double, feed: Int) =
+    fun home(axes: String = "") = device?.let { addLog('>', "home ${axes.ifEmpty { "all" }}"); it.home(axes) }
+        ?: gcode(if (axes.isEmpty()) "G28" else "G28 $axes")
+    fun move(axis: Char, dist: Double, feed: Int) = device?.let { addLog('>', "jog $axis${fmt(dist)} F$feed"); it.jog(axis, dist, feed) } ?:
         gcode("G91\nG1 $axis${fmt(dist)} F$feed\nG90")
     fun extrude(mm: Double) = gcode("M83\nG1 E${fmt(mm)} F300")
     fun motorsOff() = gcode("M84")
 
     fun requestFiles() {
+        device?.let { d -> d.files { list -> if (list != null) _files.value = list }; return }
         call("server.files.list", JSONObject().put("root", "gcodes")) { result, _ ->
             if (result is JSONArray) _files.value = parseGcodeFiles(result)
         }
@@ -383,7 +425,7 @@ class PrinterClient(private val scope: CoroutineScope) {
     fun printFile(path: String) {
         val start = {
             addLog('>', tr(R.string.log_print_file, path))
-            call("printer.print.start", JSONObject().put("filename", path))
+            device?.start(path) ?: call("printer.print.start", JSONObject().put("filename", path))
         }
         val f = printFilter ?: return start().let {}
         f(path) { ok -> if (ok) start() else addLog('!', tr(R.string.log_plugin_print_blocked, path)) }

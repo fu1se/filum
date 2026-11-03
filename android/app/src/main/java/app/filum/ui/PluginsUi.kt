@@ -51,6 +51,7 @@ import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import app.filum.R
+import app.filum.plugins.GRANT_DEVICE
 import app.filum.plugins.GRANT_GCODE
 import app.filum.plugins.GRANT_HTTP
 import app.filum.plugins.GRANT_NOTIFY
@@ -64,13 +65,19 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.util.Locale
 
-/** Разделы, которые добавили плагины (filum.ui.section), — на вкладке «Управление». */
+/**
+ * Разделы, которые добавили плагины (filum.ui.section), — на вкладке «Управление». Для устройства на драйвере
+ * [device] — только разделы его плагина и плагинов без доступа к принтеру (без разрешения gcode): кнопки
+ * принтерных плагинов вроде «нагреть до 240°» станку не нужны.
+ */
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
-fun PluginSections() {
+fun PluginSections(device: String = "") {
     val sections by Plugins.host.sections.collectAsStateWithLifecycle()
     val plugins by Plugins.host.plugins.collectAsStateWithLifecycle()
     for (s in sections) {
+        if (device.isNotEmpty() && s.pluginId != device &&
+            plugins.firstOrNull { it.meta.id == s.pluginId }?.meta?.grants?.contains(GRANT_GCODE) != false) continue
         val name = plugins.firstOrNull { it.meta.id == s.pluginId }?.meta?.name ?: s.pluginId
         Section(s.title.ifBlank { name }) {
             if (s.title.isNotBlank() && s.title != name) Text(tr(R.string.plugin_by, name),
@@ -313,5 +320,6 @@ private fun grantText(g: String) = when (g) {
     GRANT_GCODE -> tr(R.string.grant_gcode)
     GRANT_HTTP -> tr(R.string.grant_http)
     GRANT_NOTIFY -> tr(R.string.grant_notify)
+    GRANT_DEVICE -> tr(R.string.grant_device)
     else -> g
 }

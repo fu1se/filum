@@ -24,7 +24,12 @@ class PluginHostTest {
         override fun state() = state
         override fun toast(text: String) { logs += "toast:$text" }
         override fun notify(title: String, text: String) { logs += "notify:$title" }
-        override fun http(method: String, url: String, body: String?, contentType: String?) = 200 to "ok"
+        val requests = mutableListOf<String>()
+        var httpHandler: (String, String, String?) -> Pair<Int, String> = { _, _, _ -> 200 to "ok" }
+        override fun http(method: String, url: String, body: String?, contentType: String?): Pair<Int, String> {
+            requests += "$method $url ${body.orEmpty()}".trim()
+            return httpHandler(method, url, body)
+        }
         override fun storageGet(pluginId: String, key: String) = storage["$pluginId/$key"]
         override fun storageSet(pluginId: String, key: String, json: String?) { if (json == null) storage.remove("$pluginId/$key") else storage["$pluginId/$key"] = json }
         override fun log(pluginId: String, level: Char, text: String) { logs += "$level[$pluginId] $text" }
@@ -155,6 +160,73 @@ class PluginHostTest {
         assertTrue(out, out.contains("EXCLUDE_OBJECT_START NAME=PA_0.07.stl_id_3_copy_0\nSET_PRESSURE_ADVANCE ADVANCE=0.07"))
         assertEquals("M104 S240", await<String?> { host.filterGcode("M104 S240", it) })
         assertNull(await<String?> { host.filterGcode("M104 S400", it) })
-        assertEquals(3, host.sections.value.size)
+        assertEquals(3, host.sections.value.size)  // quick-actions, temperature-guard, print-webhook (cnc-pi — только когда выбран)
+    }
+
+    @Test fun cncPiDriver() {
+        var state = "Idle"
+        var jobJson = """{"name":null,"running":false,"paused":false,"done":0,"total":0,"elapsed":0}"""
+        var down = false
+        fake.httpHandler = { method, url, _ ->
+            if (down) throw java.io.IOException("connect timed out")
+            when {
+                url.startsWith("http://pi:8080/api/status") -> 200 to """{"ok":true,"s":{"connected":true,"state":"$state","wpos":[1,2.5,-0.1],"feed":0,"spindle":0,"ov":[100,100,100],"message":""},"job":$jobJson}"""
+                url.startsWith("http://pi:8080/api/files") -> 200 to """{"ok":true,"files":[{"name":"test-square.nc","size":174,"mtime":1.5}]}"""
+                url.startsWith("http://pi:8080/api/camera") -> 200 to """{"ok":true,"available":true}"""
+                method == "POST" -> 200 to """{"ok":true}"""
+                else -> 404 to "not found"
+            }
+        }
+        assertNull(load(java.io.File("src/main/assets/plugins/cnc-pi.js").readText()))
+        assertEquals(listOf(DeviceType("cnc-pi", "ЧПУ (cnc-pi)", "192.168.0.50:8080")), host.devices.value)
+        assertTrue(host.sections.value.isEmpty())   // пока ЧПУ не выбрано — плагин ничего не показывает
+
+        val states = mutableListOf<JSONObject>()
+        val listener = object : app.filum.data.DeviceListener {
+            override fun onState(state: JSONObject) { synchronized(states) { states += state } }
+            override fun onLog(dir: Char, text: String) {}
+        }
+        host.deviceConnect("cnc-pi", "pi:8080?token=s3cret", listener); host.flush()
+        val first = synchronized(states) { states.last() }
+        assertTrue(first.toString(), first.getBoolean("connected"))
+        assertEquals("standby", first.getString("state"))
+        assertEquals("Простой", first.getString("status"))
+        assertEquals(2.5, first.getJSONArray("position").getDouble(1), 1e-9)
+        assertEquals("http://pi:8080/camera/stream?token=s3cret", first.getString("camera"))
+        assertTrue(fake.requests.all { "token=s3cret" in it })
+        assertEquals("ЧПУ", host.sections.value.single().title)
+
+        fake.requests.clear()
+        host.deviceCall("cnc-pi", "jog", arrayOf("X", 10.0, 6000)); host.flush()
+        assertTrue(fake.requests.toString(), fake.requests.any { it.startsWith("POST http://pi:8080/api/jog") && it.contains("\"X\":10") && it.contains("\"feed\":1000") })
+
+        val files = await<Any?> { cb -> host.deviceCall("cnc-pi", "files", emptyArray(), cb) } as org.json.JSONArray
+        assertEquals("test-square.nc", files.getJSONObject(0).getString("path"))
+
+        host.deviceCall("cnc-pi", "start", arrayOf("test-square.nc")); host.flush()
+        assertTrue(fake.requests.toString(), fake.requests.any { it.contains("/api/job") && it.contains("\"action\":\"start\"") })
+
+        // задание идёт: для приложения это «печать» с прогрессом; пауза — пауза задания
+        state = "Run"; jobJson = """{"name":"test-square.nc","running":true,"paused":false,"done":30,"total":120,"elapsed":60}"""
+        fake.requests.clear()
+        host.deviceCall("cnc-pi", "pause", emptyArray()); host.flush()
+        assertTrue(fake.requests.toString(), fake.requests.any { it.contains("/api/job") && it.contains("\"action\":\"pause\"") })
+        val run = synchronized(states) { states.last() }
+        assertEquals("printing", run.getString("state"))
+        assertEquals(25, run.getInt("progress"))
+        assertEquals(180, run.getInt("timeLeft"))
+
+        state = "Alarm"; jobJson = """{"name":null,"running":false,"paused":false,"done":0,"total":0,"elapsed":0}"""
+        host.deviceCall("cnc-pi", "command", arrayOf("\$X")); host.flush()
+        assertEquals("АВАРИЯ", synchronized(states) { states.last() }.getString("status"))
+
+        down = true
+        host.deviceCall("cnc-pi", "command", arrayOf("G0 X0")); host.flush()
+        val off = synchronized(states) { states.last() }
+        assertFalse(off.getBoolean("connected"))
+        assertTrue(off.toString(), off.getString("message").contains("connect timed out"))
+
+        host.deviceDisconnect("cnc-pi"); host.flush()
+        assertTrue(host.sections.value.isEmpty())
     }
 }

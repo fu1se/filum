@@ -153,12 +153,14 @@ object Plugins {
         .put("speedPct", s.speedPct).put("flowPct", s.flowPct)
         .put("light", s.light)
         .put("hostname", s.hostname)
+        // выбранное устройство на драйвере-плагине (id плагина) или null — обычный принтер
+        .put("device", app.getSharedPreferences("settings", Context.MODE_PRIVATE).getString("driver", null)?.ifEmpty { null })
 
     // ---------- что умеют плагины ----------
 
     private class Services : PluginServices {
         private val http = OkHttpClient.Builder()
-            .connectTimeout(10, TimeUnit.SECONDS).readTimeout(15, TimeUnit.SECONDS).build()
+            .connectTimeout(5, TimeUnit.SECONDS).readTimeout(15, TimeUnit.SECONDS).build()
         private val main = Handler(Looper.getMainLooper())
 
         override fun sendGcode(script: String) {
@@ -213,4 +215,29 @@ object Plugins {
     }
 
     private const val MAX_BODY = 1L shl 20
+}
+
+/** Устройство на драйвере-плагине [pluginId] (filum.device.register) для [PrinterClient.connectDevice]. */
+class PluginDeviceBackend(private val pluginId: String) : app.filum.data.DeviceBackend {
+    private val host get() = Plugins.host
+
+    override fun connect(address: String, listener: app.filum.data.DeviceListener) = host.deviceConnect(pluginId, address, listener)
+    override fun disconnect() = host.deviceDisconnect(pluginId)
+    override fun command(script: String) = host.deviceCall(pluginId, "command", arrayOf(script))
+    override fun jog(axis: Char, distance: Double, feed: Int) = host.deviceCall(pluginId, "jog", arrayOf(axis.toString(), distance, feed))
+    override fun home(axes: String) = host.deviceCall(pluginId, "home", arrayOf(axes))
+    override fun pause() = host.deviceCall(pluginId, "pause", emptyArray())
+    override fun resume() = host.deviceCall(pluginId, "resume", emptyArray())
+    override fun stop() = host.deviceCall(pluginId, "stop", emptyArray())
+    override fun start(path: String) = host.deviceCall(pluginId, "start", arrayOf(path))
+
+    override fun files(onResult: (List<app.filum.data.GcodeFile>?) -> Unit) = host.deviceCall(pluginId, "files", emptyArray()) { r ->
+        onResult((r as? org.json.JSONArray)?.let { a ->
+            (0 until a.length()).mapNotNull { i ->
+                val o = a.optJSONObject(i) ?: return@mapNotNull null
+                val path = o.optString("path").ifBlank { o.optString("name") }.ifBlank { return@mapNotNull null }
+                app.filum.data.GcodeFile(path, o.optLong("size", -1).takeIf { it >= 0 }, o.optDouble("modified").takeIf { !it.isNaN() })
+            }
+        })
+    }
 }

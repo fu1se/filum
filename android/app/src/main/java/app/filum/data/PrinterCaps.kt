@@ -34,6 +34,11 @@ data class PrinterCaps(
      */
     val nozzleDiameter get() = !known || "SET_NOZZLE_DIAMETER" in commands || "CXSAVE_CONFIG" in commands
 
+    /** Нагрев сопла и стола (у устройств на драйверах вроде ЧПУ их нет). */
+    val heaters get() = has("extruder")
+    /** Обычный Klipper: экструзия, скорость/поток (M220/M221), смещение Z, M84. */
+    val klipper get() = has("gcode_move")
+
     /** На что подписываться: только существующие объекты. */
     fun subscribeList(): List<String> = if (!known) ALL else ALL.filter { it in objects }
 

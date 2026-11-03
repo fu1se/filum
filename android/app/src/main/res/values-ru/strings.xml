@@ -530,4 +530,9 @@
     <string name="grant_notify">notify: показывать уведомления</string>
     <string name="log_plugin_blocked">Плагин заблокировал команду: %1$s</string>
     <string name="log_plugin_print_blocked">Плагин заблокировал печать: %1$s</string>
+    <string name="grant_device">device: добавить тип устройства, который выбирается как принтер, и управлять им</string>
+    <string name="device_type">Тип устройства</string>
+    <string name="device_klipper">3D-принтер (Klipper / Moonraker)</string>
+    <string name="device_missing">%1$s (плагин не установлен)</string>
+    <string name="device_address">Адрес устройства</string>
 </resources>

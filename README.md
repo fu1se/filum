@@ -36,7 +36,8 @@ prints, straight from the phone.
 - **Several printers.** Save several printers and switch between them in one tap.
 - **G-code console.**
 - **Plugins.** JavaScript plugins can change the commands, slicing requests and G-code the app sends,
-  block prints, react to print events and add their own controls ([API](docs/plugins.md)).
+  block prints, react to print events and add their own controls ([API](docs/plugins.md)). A plugin can also be a
+  driver for another machine: the bundled `cnc-pi` plugin adds a GRBL CNC that is selected like a printer.
 - **Languages:** English and Russian. Android 13+ lets you choose per app.
 - **Light and dark theme**, or follow the system (⚙ → Theme).
 

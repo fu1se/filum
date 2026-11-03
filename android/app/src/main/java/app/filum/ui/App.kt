@@ -2,6 +2,7 @@ package app.filum.ui
 
 import app.filum.tr
 import app.filum.R
+import app.filum.plugins.Plugins
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material.icons.filled.Add
@@ -101,6 +102,7 @@ fun App(vm: PrinterViewModel, slicerVm: SlicerViewModel) {
     val activeId by vm.activeId.collectAsStateWithLifecycle()
     val context = androidx.compose.ui.platform.LocalContext.current
     val connected = conn == ConnState.Connected
+    val isDevice = settings.driver.isNotEmpty()
     val openSlicer by slicerVm.openSlicerTab.collectAsStateWithLifecycle()
     val crealityInfo by vm.creality.info.collectAsStateWithLifecycle()
     LaunchedEffect(state.nozzleDiameter) { slicerVm.setNozzle(state.nozzleDiameter) }
@@ -177,6 +179,8 @@ fun App(vm: PrinterViewModel, slicerVm: SlicerViewModel) {
         bottomBar = {
             NavigationBar {
                 tabs.forEachIndexed { i, t ->
+                    // устройство на драйвере (ЧПУ): слайсер и таймлапсы — только для принтеров Klipper
+                    if (isDevice && (i == 2 || i == 4)) return@forEachIndexed
                     NavigationBarItem(
                         selected = tab == i,
                         onClick = { tab = i },
@@ -188,14 +192,20 @@ fun App(vm: PrinterViewModel, slicerVm: SlicerViewModel) {
         },
     ) { padding ->
         Box(Modifier.padding(padding)) {
-            when (tab) {
-                0 -> {
+            when (if (isDevice && (tab == 2 || tab == 4)) 0 else tab) {
+                0 -> if (isDevice) {
+                    // камера устройства — MJPEG по адресу, который сообщил драйвер; нет адреса — без камеры
+                    val cam = state.cameraUrl
+                    DashboardScreen(state, connected,
+                        settings.copy(cameraMode = if (cam != null) CameraMode.MJPEG else CameraMode.OFF, cameraUrl = cam.orEmpty()),
+                        vm.client, null, null, noCamera = cam == null)
+                } else {
                     val screenFault by vm.creality.fault.collectAsStateWithLifecycle()
                     val gcodeFault by vm.client.fault.collectAsStateWithLifecycle()
                     DashboardScreen(state, connected, settings, vm.client, pickFault(screenFault, gcodeFault, state),
                         crealityInfo?.webrtc, noCamera = crealityInfo?.camera == false)
                 }
-                1 -> ControlScreen(state, connected, vm.client, slicerVm, expert = settings.expert)
+                1 -> ControlScreen(state, connected, vm.client, slicerVm, expert = settings.expert, device = settings.driver)
                 2 -> SlicerScreen(slicerVm, connected)
                 3 -> FilesScreen(files, state, connected, vm.client)
                 4 -> TimelapseScreen(vm, timelapses, settings.hostOnly())
@@ -246,6 +256,9 @@ private fun SettingsDialog(
     var notifications by remember { mutableStateOf(initial.notifications) }
     var theme by remember { mutableStateOf(initial.theme) }
     var expert by remember { mutableStateOf(initial.expert) }
+    var driver by remember { mutableStateOf(initial.driver) }
+    val devices by Plugins.host.devices.collectAsStateWithLifecycle()
+    val device = devices.firstOrNull { it.pluginId == driver }
     val preview = AppSettings(host.trim(), mode, "").resolvedCameraUrl()
 
     AlertDialog(
@@ -253,11 +266,26 @@ private fun SettingsDialog(
         title = { Text(if (adding) tr(R.string.new_printer) else tr(R.string.settings)) },
         text = {
             Column(Modifier.verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                // устройства от плагинов (ЧПУ и т. п.) — выбираются как ещё один тип принтера
+                if (devices.isNotEmpty() || driver.isNotEmpty()) {
+                    Text(tr(R.string.device_type), style = MaterialTheme.typography.titleSmall)
+                    val types = listOf("" to tr(R.string.device_klipper)) + devices.map { it.pluginId to it.name } +
+                        (if (driver.isNotEmpty() && device == null) listOf(driver to tr(R.string.device_missing, driver)) else emptyList())
+                    types.forEach { (id, title) ->
+                        Row(
+                            Modifier.fillMaxWidth().selectable(selected = driver == id, onClick = { driver = id }),
+                            verticalAlignment = Alignment.CenterVertically,
+                        ) {
+                            RadioButton(selected = driver == id, onClick = { driver = id })
+                            Text(title)
+                        }
+                    }
+                }
                 OutlinedTextField(
                     value = host,
                     onValueChange = { host = it.trim() },
-                    label = { Text(tr(R.string.printer_ip)) },
-                    placeholder = { Text("192.168.1.50") },
+                    label = { Text(if (driver.isEmpty()) tr(R.string.printer_ip) else tr(R.string.device_address)) },
+                    placeholder = { Text(device?.addressHint?.ifBlank { null } ?: "192.168.1.50") },
                     singleLine = true,
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Uri),
                     modifier = Modifier.fillMaxWidth(),
@@ -270,13 +298,14 @@ private fun SettingsDialog(
                     singleLine = true,
                     modifier = Modifier.fillMaxWidth(),
                 )
-                Text(
+                if (driver.isEmpty()) Text(
                     tr(R.string.printer_ip_hint),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
-                Text(tr(R.string.camera), style = MaterialTheme.typography.titleSmall)
-                CameraMode.entries.forEach { m ->
+                // у устройства на драйвере камеру (если есть) отдаёт сам драйвер
+                if (driver.isEmpty()) Text(tr(R.string.camera), style = MaterialTheme.typography.titleSmall)
+                if (driver.isEmpty()) CameraMode.entries.forEach { m ->
                     Row(
                         Modifier.fillMaxWidth().selectable(selected = mode == m, onClick = { mode = m }),
                         verticalAlignment = Alignment.CenterVertically,
@@ -285,7 +314,7 @@ private fun SettingsDialog(
                         Text(m.title)
                     }
                 }
-                if (mode != CameraMode.OFF) {
+                if (driver.isEmpty() && mode != CameraMode.OFF) {
                     OutlinedTextField(
                         value = camUrl,
                         onValueChange = { camUrl = it.trim() },
@@ -338,7 +367,7 @@ private fun SettingsDialog(
             TextButton(
                 onClick = {
                     onSave(AppSettings(host.trim(), mode, camUrl.trim(),
-                        slicerUrl.trim().ifBlank { SlicerViewModel.DEFAULT_SLICER_URL }, notifications, name.trim(), theme, expert))
+                        slicerUrl.trim().ifBlank { SlicerViewModel.DEFAULT_SLICER_URL }, notifications, name.trim(), theme, expert, driver))
                 },
                 enabled = host.isNotBlank(),
             ) { Text(tr(R.string.save)) }

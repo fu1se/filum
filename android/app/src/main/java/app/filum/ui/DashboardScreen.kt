@@ -158,7 +158,7 @@ fun DashboardScreen(
             }
         }
 
-        Section(tr(R.string.temperatures)) {
+        if (state.caps.heaters) Section(tr(R.string.temperatures)) {
             Row {
                 InfoCell(tr(R.string.nozzle), "${fmtTemp(state.nozzleTemp)} / ${fmtTemp(state.nozzleTarget)}", Modifier.weight(1f))
                 InfoCell(tr(R.string.bed), "${fmtTemp(state.bedTemp)} / ${fmtTemp(state.bedTarget)}", Modifier.weight(1f))
@@ -166,7 +166,7 @@ fun DashboardScreen(
             }
         }
 
-        Section(tr(R.string.speed_and_flow)) {
+        if (state.caps.klipper) Section(tr(R.string.speed_and_flow)) {
             PercentSlider(tr(R.string.speed), state.speedPct, 10..300, connected) { client.setSpeedPct(it) }
             PercentSlider(tr(R.string.flow), state.flowPct, 50..150, connected) { client.setFlowPct(it) }
         }

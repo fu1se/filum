@@ -112,7 +112,8 @@ class PrintMonitorService : Service() {
             ACTION_RESUME -> exec.execute { printAction("printer.print.resume") }
             else -> exec.execute {
                 val h = prefs(this).getString("host", "").orEmpty().trim()
-                if (h.isEmpty()) { stopSelf(); return@execute }
+                // устройство на драйвере-плагине (ЧПУ и т. п.) — не Moonraker, следить нечем
+                if (h.isEmpty() || prefs(this).getString("driver", "").orEmpty().isNotEmpty()) { stopSelf(); return@execute }
                 if (h != host || ws == null) { host = h; open() }
                 creality.connect(h)
             }

@@ -1,5 +1,6 @@
 package app.filum.plugins
 
+import app.filum.data.DeviceListener
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -15,6 +16,7 @@ import org.mozilla.javascript.NativeArray
 import org.mozilla.javascript.NativeJSON
 import org.mozilla.javascript.RhinoException
 import org.mozilla.javascript.Scriptable
+import org.mozilla.javascript.ScriptRuntime
 import org.mozilla.javascript.ScriptableObject
 import org.mozilla.javascript.Undefined
 import java.util.concurrent.CountDownLatch
@@ -33,7 +35,7 @@ data class PluginMeta(
     val grants: Set<String>,
 ) {
     companion object {
-        val KNOWN_GRANTS = setOf(GRANT_GCODE, GRANT_HTTP, GRANT_NOTIFY)
+        val KNOWN_GRANTS = setOf(GRANT_GCODE, GRANT_HTTP, GRANT_NOTIFY, GRANT_DEVICE)
         private val ID = Regex("^[a-z0-9][a-z0-9._-]{1,63}$")
 
         /** Разбирает заголовок; бросает [IllegalArgumentException] с понятным текстом. */
@@ -67,6 +69,10 @@ data class PluginMeta(
 const val GRANT_GCODE = "gcode"
 const val GRANT_HTTP = "http"
 const val GRANT_NOTIFY = "notify"
+const val GRANT_DEVICE = "device"
+
+/** Тип устройства, который зарегистрировал плагин (filum.device.register): его можно выбрать как принтер. */
+data class DeviceType(val pluginId: String, val name: String, val addressHint: String)
 
 /** Что приложение даёт плагинам. Реализация — в [AndroidPluginServices]; в тестах — подделка. */
 interface PluginServices {
@@ -140,6 +146,9 @@ class PluginHost(private val services: PluginServices) {
         val timers = mutableMapOf<Int, ScheduledFuture<*>>()
         /** sectionId → обработчики элементов по индексу. */
         val sectionCallbacks = mutableMapOf<Int, List<Function?>>()
+        /** Драйвер устройства (filum.device.register) и подключённый к нему клиент. */
+        var driver: Scriptable? = null
+        var deviceListener: DeviceListener? = null
     }
 
     // только из потока плагинов
@@ -148,6 +157,12 @@ class PluginHost(private val services: PluginServices) {
 
     private val _sections = MutableStateFlow<List<PluginSection>>(emptyList())
     val sections: StateFlow<List<PluginSection>> = _sections.asStateFlow()
+
+    private val _devices = MutableStateFlow<List<DeviceType>>(emptyList())
+    val devices: StateFlow<List<DeviceType>> = _devices.asStateFlow()
+
+    /** Выбранное устройство, чей плагин ещё не загружен (или перезагружается): подключим после register(). */
+    private val pendingDevice = mutableMapOf<String, Pair<String, DeviceListener>>()
 
     private val _plugins = MutableStateFlow<List<PluginInfo>>(emptyList())
     val plugins: StateFlow<List<PluginInfo>> = _plugins.asStateFlow()
@@ -206,6 +221,12 @@ class PluginHost(private val services: PluginServices) {
 
     private fun unloadNow(id: String) {
         val p = loaded[id] ?: return
+        p.deviceListener?.let { l ->
+            callDriver(p, "disconnect")
+            l.onState(JSONObject().put("connected", false).put("message", "plugin '$id' is not loaded"))
+            pendingDevice[id] = (deviceAddress[id] ?: "") to l
+        }
+        _devices.update { list -> list.filterNot { it.pluginId == id } }
         emit(p, "unload", emptyArray())
         p.timers.values.forEach { it.cancel(false) }
         loaded.remove(id)
@@ -310,6 +331,47 @@ class PluginHost(private val services: PluginServices) {
             }
             onResult(cur)
         }
+    }
+
+    // ---------- устройства (драйверы) ----------
+
+    private val deviceAddress = mutableMapOf<String, String>()
+
+    /** Подключиться к устройству плагина [pluginId] по адресу [address]. */
+    fun deviceConnect(pluginId: String, address: String, listener: DeviceListener) = executor.execute {
+        deviceAddress[pluginId] = address
+        val p = loaded[pluginId]
+        if (p?.driver == null) {
+            pendingDevice[pluginId] = address to listener
+            listener.onState(JSONObject().put("connected", false).put("message", "plugin '$pluginId' is not installed or disabled"))
+            return@execute
+        }
+        p.deviceListener = listener
+        callDriver(p, "connect", address)
+    }
+
+    fun deviceDisconnect(pluginId: String) = executor.execute {
+        pendingDevice.remove(pluginId)
+        val p = loaded[pluginId] ?: return@execute
+        if (p.deviceListener == null) return@execute
+        p.deviceListener = null
+        callDriver(p, "disconnect")
+    }
+
+    /** Вызов метода драйвера; [onResult] получит результат (JSONObject/JSONArray/строка/null). */
+    fun deviceCall(pluginId: String, method: String, args: Array<Any?>, onResult: ((Any?) -> Unit)? = null) = executor.execute {
+        val p = loaded[pluginId]
+        val r = if (p?.deviceListener != null) callDriver(p, method, *args) else null
+        onResult?.invoke(r)
+    }
+
+    private fun callDriver(p: Loaded, method: String, vararg args: Any?): Any? {
+        val d = p.driver ?: return null
+        val f = ScriptableObject.getProperty(d, method) as? Function ?: return null
+        val ms = if (method == "files" || method == "connect") QUERY_MS + HOOK_MS else HOOK_MS
+        return run(p, ms) { cx ->
+            fromJs(cx, p.scope, f.call(cx, p.scope, d, args.map { toJs(cx, p.scope, it) }.toTypedArray()))
+        }?.takeUnless { it == Unit }
     }
 
     /** Нажатие/изменение элемента интерфейса плагина. */
@@ -443,6 +505,35 @@ class PluginHost(private val services: PluginServices) {
             null
         }
 
+        val device = cx.newObject(scope)
+        ScriptableObject.putProperty(filum, "device", device)
+        fn(device, "register") { _, a ->
+            need(GRANT_DEVICE)
+            val d = a.getOrNull(0) as? Scriptable ?: throw Context.reportRuntimeError("filum.device.register: pass an object")
+            fun prop(n: String) = ScriptableObject.getProperty(d, n).takeUnless { it == Scriptable.NOT_FOUND || Undefined.isUndefined(it) }
+            if (prop("connect") !is Function) throw Context.reportRuntimeError("filum.device.register: connect(address) is required")
+            p.driver = d
+            val type = DeviceType(id, prop("name")?.let { Context.toString(it) } ?: p.meta.name,
+                prop("addressHint")?.let { Context.toString(it) }.orEmpty())
+            _devices.update { l -> l.filterNot { it.pluginId == id } + type }
+            // устройство уже выбрано в приложении — подключаемся, как только плагин загрузится
+            pendingDevice.remove(id)?.let { (addr, l) ->
+                executor.execute { if (loaded[id] === p) { p.deviceListener = l; callDriver(p, "connect", addr) } }
+            }
+            null
+        }
+        fn(device, "update") { c, a ->
+            val l = p.deviceListener ?: return@fn null
+            val v = a.getOrNull(0) as? Scriptable ?: return@fn null
+            l.onState(JSONObject(Context.toString(NativeJSON.stringify(c, scope, v, null, null))))
+            null
+        }
+        fn(device, "log") { _, a ->
+            p.deviceListener?.onLog(if (a.size > 1) str(a, 0).firstOrNull() ?: '<' else '<', str(a, a.size - 1))
+            null
+        }
+        fn(device, "connected") { _, _ -> p.deviceListener != null }
+
         val http = cx.newObject(scope)
         ScriptableObject.putProperty(filum, "http", http)
         fun response(c: Context, r: Pair<Int, String>): Scriptable = c.newObject(scope).also {
@@ -488,8 +579,14 @@ class PluginHost(private val services: PluginServices) {
 
     private fun fn(obj: Scriptable, name: String, body: (Context, Array<Any?>) -> Any?) {
         ScriptableObject.putProperty(obj, name, object : BaseFunction() {
-            override fun call(cx: Context, scope: Scriptable, thisObj: Scriptable?, args: Array<Any?>): Any? =
+            override fun call(cx: Context, scope: Scriptable, thisObj: Scriptable?, args: Array<Any?>): Any? = try {
                 body(cx, args) ?: Undefined.instance
+            } catch (e: RhinoException) {
+                throw e
+            } catch (e: Exception) {
+                // ошибки сервисов (сеть, нет связи с принтером) — обычный JS Error, его ловит try/catch плагина
+                throw ScriptRuntime.constructError("Error", e.message ?: e.javaClass.simpleName)
+            }
             override fun getFunctionName() = name
         })
     }

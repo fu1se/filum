@@ -531,4 +531,9 @@
     <string name="grant_notify">notify: show notifications</string>
     <string name="log_plugin_blocked">A plugin blocked the command: %1$s</string>
     <string name="log_plugin_print_blocked">A plugin blocked the print: %1$s</string>
+    <string name="grant_device">device: add a device type that can be selected like a printer, and control it</string>
+    <string name="device_type">Device type</string>
+    <string name="device_klipper">3D printer (Klipper / Moonraker)</string>
+    <string name="device_missing">%1$s (plugin not installed)</string>
+    <string name="device_address">Device address</string>
 </resources>
