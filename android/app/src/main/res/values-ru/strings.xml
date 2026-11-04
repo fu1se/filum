@@ -564,4 +564,18 @@
     <string name="catalog_update_all">Обновить все</string>
     <string name="catalog_updates_q">Доступны обновления плагинов: %1$d</string>
     <string name="catalog_failed">%1$s: %2$s</string>
+    <string name="job_section">Задание</string>
+    <string name="stop_job_q">Остановить задание?</string>
+    <string name="start_job_q">Запустить программу?</string>
+    <string name="machine_busy">Станок сейчас занят!</string>
+    <string name="cnc_check_before">Проверьте заготовку, фрезу и рабочий ноль.</string>
+    <string name="action_run">Запустить</string>
+    <string name="files_empty_cnc">На станке нет файлов G-code.</string>
+    <string name="cnc_alarm_hint">Авария: разблокируйте или сделайте Home</string>
+    <string name="cnc_unlock">Разблок. $X</string>
+    <string name="jog_step">Шаг, мм</string>
+    <string name="goto_title">Перейти в координаты (пустое поле — ось на месте)</string>
+    <string name="goto_current">Текущие</string>
+    <string name="goto_go">Перейти</string>
+    <string name="catalog_all_installed">Все проверенные плагины установлены.</string>
 </resources>

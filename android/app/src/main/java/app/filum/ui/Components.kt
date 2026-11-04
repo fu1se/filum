@@ -223,13 +223,14 @@ fun PercentSlider(
 }
 
 @Composable
-fun ChipButton(text: String, selected: Boolean = false, enabled: Boolean = true, onClick: () -> Unit) {
+fun ChipButton(text: String, selected: Boolean = false, enabled: Boolean = true, modifier: Modifier = Modifier, onClick: () -> Unit) {
     OutlinedButton(
         onClick = onClick,
         enabled = enabled,
+        modifier = modifier,
         colors = if (selected) androidx.compose.material3.ButtonDefaults.outlinedButtonColors(
             containerColor = Accent.copy(alpha = 0.18f), contentColor = Accent
         ) else androidx.compose.material3.ButtonDefaults.outlinedButtonColors(),
         contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 12.dp, vertical = 6.dp),
-    ) { Text(text) }
+    ) { Text(text, maxLines = 1, softWrap = false) }
 }

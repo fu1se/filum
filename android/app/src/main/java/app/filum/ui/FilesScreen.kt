@@ -38,7 +38,7 @@ import app.filum.data.PrinterClient
 import app.filum.data.PrinterState
 
 @Composable
-fun FilesScreen(files: List<GcodeFile>?, state: PrinterState, connected: Boolean, client: PrinterClient) {
+fun FilesScreen(files: List<GcodeFile>?, state: PrinterState, connected: Boolean, client: PrinterClient, device: Boolean = false) {
     var toPrint by remember { mutableStateOf<GcodeFile?>(null) }
 
     LaunchedEffect(connected) { if (connected && files == null) client.requestFiles() }
@@ -57,10 +57,14 @@ fun FilesScreen(files: List<GcodeFile>?, state: PrinterState, connected: Boolean
         HorizontalDivider()
         if (files.isNullOrEmpty()) {
             Box(Modifier.fillMaxSize().padding(24.dp), contentAlignment = Alignment.Center) {
-                Text(
-                    if (files == null) tr(R.string.files_hint_1) +
-                        tr(R.string.files_hint_2)
-                    else tr(R.string.files_empty),
+                if (files == null && connected) androidx.compose.material3.CircularProgressIndicator()
+                else Text(
+                    when {
+                        !connected -> tr(R.string.not_connected)
+                        files == null -> tr(R.string.files_hint_1) + tr(R.string.files_hint_2)
+                        device -> tr(R.string.files_empty_cnc)
+                        else -> tr(R.string.files_empty)
+                    },
                     textAlign = TextAlign.Center,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
@@ -82,17 +86,17 @@ fun FilesScreen(files: List<GcodeFile>?, state: PrinterState, connected: Boolean
     toPrint?.let { f ->
         AlertDialog(
             onDismissRequest = { toPrint = null },
-            title = { Text(tr(R.string.start_print_q)) },
+            title = { Text(tr(if (device) R.string.start_job_q else R.string.start_print_q)) },
             text = {
                 Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     Text(f.name)
-                    if (state.hasActiveJob) Text(tr(R.string.printer_busy), color = MaterialTheme.colorScheme.error)
-                    Text(tr(R.string.bed_clear), style = MaterialTheme.typography.bodySmall)
+                    if (state.hasActiveJob) Text(tr(if (device) R.string.machine_busy else R.string.printer_busy), color = MaterialTheme.colorScheme.error)
+                    Text(tr(if (device) R.string.cnc_check_before else R.string.bed_clear), style = MaterialTheme.typography.bodySmall)
                 }
             },
             confirmButton = {
                 TextButton(onClick = { client.printFile(f.path); toPrint = null }, enabled = !state.hasActiveJob) {
-                    Text(tr(R.string.action_print))
+                    Text(tr(if (device) R.string.action_run else R.string.action_print))
                 }
             },
             dismissButton = { TextButton(onClick = { toPrint = null }) { Text(tr(R.string.cancel)) } },

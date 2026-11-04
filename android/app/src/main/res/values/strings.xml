@@ -565,4 +565,18 @@
     <string name="catalog_update_all">Update all</string>
     <string name="catalog_updates_q">Plugin updates available: %1$d</string>
     <string name="catalog_failed">%1$s: %2$s</string>
+    <string name="job_section">Job</string>
+    <string name="stop_job_q">Stop the job?</string>
+    <string name="start_job_q">Run the program?</string>
+    <string name="machine_busy">The machine is busy right now!</string>
+    <string name="cnc_check_before">Check the stock, the bit and the work zero.</string>
+    <string name="action_run">Run</string>
+    <string name="files_empty_cnc">There are no G-code files on the machine.</string>
+    <string name="cnc_alarm_hint">Alarm: unlock or run Home</string>
+    <string name="cnc_unlock">Unlock $X</string>
+    <string name="jog_step">Step, mm</string>
+    <string name="goto_title">Go to coordinates (empty field keeps the axis)</string>
+    <string name="goto_current">Current</string>
+    <string name="goto_go">Go</string>
+    <string name="catalog_all_installed">All verified plugins are installed.</string>
 </resources>

@@ -412,6 +412,28 @@ class PrinterClient(private val scope: CoroutineScope) {
         ?: gcode(if (axes.isEmpty()) "G28" else "G28 $axes")
     fun move(axis: Char, dist: Double, feed: Int) = device?.let { addLog('>', "jog $axis${fmt(dist)} F$feed"); it.jog(axis, dist, feed) } ?:
         gcode("G91\nG1 $axis${fmt(dist)} F$feed\nG90")
+    /**
+     * Переезд в абсолютные координаты; null — ось не трогать. Принтер: одна команда G1 (Klipper сам ограничит скорость Z).
+     * Устройство (ЧПУ): G0, причём Z вверх — до XY, Z вниз — после, чтобы фреза не шла низом над деталью.
+     */
+    fun moveTo(x: Double?, y: Double?, z: Double?) {
+        if (x == null && y == null && z == null) return
+        val xy = listOfNotNull(x?.let { "X${fmt3(it)}" }, y?.let { "Y${fmt3(it)}" }).joinToString(" ")
+        val d = device
+        if (d == null) {
+            gcode("G90\nG1 ${listOfNotNull(xy.ifEmpty { null }, z?.let { "Z${fmt3(it)}" }).joinToString(" ")} F6000")
+            return
+        }
+        val curZ = _state.value.xyz?.get(2)
+        val zUp = z != null && (curZ == null || z >= curZ)
+        val lines = mutableListOf("G90")
+        if (z != null && zUp) lines += "G0 Z${fmt3(z)}"
+        if (xy.isNotEmpty()) lines += "G0 $xy"
+        if (z != null && !zUp) lines += "G0 Z${fmt3(z)}"
+        addLog('>', lines.drop(1).joinToString(" · "))
+        d.command(lines.joinToString("\n"))
+    }
+
     fun extrude(mm: Double) = gcode("M83\nG1 E${fmt(mm)} F300")
     fun motorsOff() = gcode("M84")
 

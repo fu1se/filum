@@ -92,11 +92,17 @@ interface PluginServices {
 
 /** Элемент интерфейса, который добавил плагин (рисуется на вкладке «Управление»). */
 sealed interface PluginItem {
-    data class Text(val text: String) : PluginItem
-    data class Button(val label: String) : PluginItem
-    data class Switch(val label: String, val value: Boolean) : PluginItem
-    data class Slider(val label: String, val min: Double, val max: Double, val step: Double, val value: Double) : PluginItem
-    data class Input(val label: String, val value: String, val button: String) : PluginItem
+    /** false — элемент виден, но неактивен (например, нет связи с устройством). */
+    val enabled: Boolean
+    /** [style]: "" или "hint" (мелкий серый текст), "label" (подзаголовок группы). */
+    data class Text(val text: String, val style: String = "", override val enabled: Boolean = true) : PluginItem
+    /** [style] "danger" — красная; [confirm] — текст вопроса перед нажатием. */
+    data class Button(val label: String, val style: String = "", val confirm: String? = null, override val enabled: Boolean = true) : PluginItem
+    data class Switch(val label: String, val value: Boolean, override val enabled: Boolean = true) : PluginItem
+    data class Slider(val label: String, val min: Double, val max: Double, val step: Double, val value: Double, override val enabled: Boolean = true) : PluginItem
+    data class Input(val label: String, val value: String, val button: String, override val enabled: Boolean = true) : PluginItem
+    /** Несколько полей в строку и одна кнопка; в onSubmit приходит массив строк в том же порядке. */
+    data class Fields(val labels: List<String>, val values: List<String>, val button: String, val numeric: Boolean, override val enabled: Boolean = true) : PluginItem
 }
 
 data class PluginSection(val pluginId: String, val id: Int, val title: String, val items: List<PluginItem>)
@@ -561,12 +567,20 @@ class PluginHost(private val services: PluginServices) {
             fun prop(n: String): Any? = ScriptableObject.getProperty(s, n).takeUnless { it == Scriptable.NOT_FOUND || Undefined.isUndefined(it) }
             fun text(n: String, def: String = "") = prop(n)?.let { Context.toString(it) } ?: def
             fun num(n: String, def: Double) = prop(n)?.let { Context.toNumber(it) } ?: def
+            val en = prop("enabled") != false
             val item = when (val t = text("type")) {
-                "text" -> PluginItem.Text(text("text"))
-                "button" -> PluginItem.Button(text("label"))
-                "switch" -> PluginItem.Switch(text("label"), prop("value") == true)
-                "slider" -> PluginItem.Slider(text("label"), num("min", 0.0), num("max", 100.0), num("step", 1.0), num("value", 0.0))
-                "input" -> PluginItem.Input(text("label"), text("value"), text("button", "OK"))
+                "text" -> PluginItem.Text(text("text"), text("style"), en)
+                "button" -> PluginItem.Button(text("label"), text("style"), prop("confirm")?.let { Context.toString(it) }, en)
+                "switch" -> PluginItem.Switch(text("label"), prop("value") == true, en)
+                "slider" -> PluginItem.Slider(text("label"), num("min", 0.0), num("max", 100.0), num("step", 1.0), num("value", 0.0), en)
+                "input" -> PluginItem.Input(text("label"), text("value"), text("button", "OK"), en)
+                "fields" -> {
+                    val fs = (prop("fields") as? NativeArray)?.mapNotNull { it as? Scriptable }.orEmpty()
+                    if (fs.isEmpty() || fs.size > 6) throw Context.reportRuntimeError("filum.ui: 'fields' needs 1..6 fields")
+                    fun f(o: Scriptable, n: String) = ScriptableObject.getProperty(o, n)
+                        .takeUnless { it == Scriptable.NOT_FOUND || Undefined.isUndefined(it) || it == null }?.let { Context.toString(it) }.orEmpty()
+                    PluginItem.Fields(fs.map { f(it, "label") }, fs.map { f(it, "value") }, text("button", "OK"), prop("numeric") == true, en)
+                }
                 else -> throw Context.reportRuntimeError("filum.ui: unknown item type '$t'")
             }
             items += item
@@ -624,7 +638,7 @@ class PluginHost(private val services: PluginServices) {
     private fun Context.use(block: (Context) -> String): String = try { block(this) } finally { Context.exit() }
 
     companion object {
-        const val API_VERSION = 1
+        const val API_VERSION = 2
         const val LOAD_MS = 5_000L
         const val HOOK_MS = 2_000L
         const val FILE_MS = 60_000L

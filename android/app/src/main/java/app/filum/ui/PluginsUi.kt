@@ -15,6 +15,12 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.runtime.toMutableStateList
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -85,7 +91,7 @@ fun PluginSections(device: String = "") {
             plugins.firstOrNull { it.meta.id == s.pluginId }?.meta?.grants?.contains(GRANT_GCODE) != false) continue
         val name = plugins.firstOrNull { it.meta.id == s.pluginId }?.meta?.name ?: s.pluginId
         Section(s.title.ifBlank { name }) {
-            if (s.title.isNotBlank() && s.title != name) Text(tr(R.string.plugin_by, name),
+            if (s.title.isNotBlank() && s.title != name && s.pluginId != device) Text(tr(R.string.plugin_by, name),
                 style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
             PluginItems(s)
         }
@@ -96,6 +102,8 @@ fun PluginSections(device: String = "") {
 @Composable
 private fun PluginItems(s: PluginSection) {
     fun send(i: Int, v: Any?) = Plugins.host.uiEvent(s.pluginId, s.id, i, v)
+    var ask by remember { mutableStateOf<Pair<Int, PluginItem.Button>?>(null) }
+    val cs = MaterialTheme.colorScheme
     // кнопки подряд — в одну строку с переносом
     val groups = mutableListOf<MutableList<Pair<Int, PluginItem>>>()
     s.items.forEachIndexed { i, item ->
@@ -106,12 +114,24 @@ private fun PluginItems(s: PluginSection) {
         val (i, item) = g.first()
         when (item) {
             is PluginItem.Button -> FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                for ((bi, b) in g) FilledTonalButton(onClick = { send(bi, null) }) { Text((b as PluginItem.Button).label) }
+                for ((bi, b) in g) {
+                    b as PluginItem.Button
+                    FilledTonalButton(
+                        onClick = { if (b.confirm != null) ask = bi to b else send(bi, null) },
+                        enabled = b.enabled,
+                        colors = if (b.style == "danger") ButtonDefaults.filledTonalButtonColors(
+                            containerColor = cs.errorContainer, contentColor = cs.onErrorContainer) else ButtonDefaults.filledTonalButtonColors(),
+                    ) { Text(b.label) }
+                }
             }
-            is PluginItem.Text -> Text(item.text, style = MaterialTheme.typography.bodyMedium)
+            is PluginItem.Text -> when (item.style) {
+                "hint" -> Text(item.text, style = MaterialTheme.typography.bodySmall, color = cs.onSurfaceVariant)
+                "label" -> Text(item.text, style = MaterialTheme.typography.titleSmall)
+                else -> Text(item.text, style = MaterialTheme.typography.bodyMedium)
+            }
             is PluginItem.Switch -> Row(verticalAlignment = Alignment.CenterVertically) {
                 Text(item.label, Modifier.weight(1f))
-                Switch(checked = item.value, onCheckedChange = { send(i, it) })
+                Switch(checked = item.value, onCheckedChange = { send(i, it) }, enabled = item.enabled)
             }
             is PluginItem.Slider -> {
                 var v by remember(s.id, i, item.value) { mutableFloatStateOf(item.value.toFloat()) }
@@ -122,16 +142,48 @@ private fun PluginItems(s: PluginSection) {
                     onValueChangeFinished = { send(i, v.toDouble()) },
                     valueRange = item.min.toFloat()..item.max.toFloat(),
                     steps = steps.coerceIn(0, 200),
+                    enabled = item.enabled,
                 )
             }
             is PluginItem.Input -> {
                 var t by remember(s.id, i, item.value) { mutableStateOf(item.value) }
                 Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    OutlinedTextField(t, { t = it }, label = { Text(item.label) }, singleLine = true, modifier = Modifier.weight(1f))
-                    FilledTonalButton(onClick = { send(i, t) }) { Text(item.button) }
+                    OutlinedTextField(t, { t = it }, label = { Text(item.label, maxLines = 1) }, singleLine = true, modifier = Modifier.weight(1f),
+                        enabled = item.enabled,
+                        keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done), keyboardActions = KeyboardActions(onDone = { send(i, t) }))
+                    FilledTonalButton(onClick = { send(i, t) }, enabled = item.enabled) { Text(item.button) }
                 }
             }
+            is PluginItem.Fields -> {
+                val vals = remember(s.id, i, item.values) { item.values.toMutableStateList() }
+                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    item.labels.forEachIndexed { k, l ->
+                        OutlinedTextField(vals[k], { vals[k] = it }, label = { Text(l, maxLines = 1) }, singleLine = true, modifier = Modifier.weight(1f),
+                            enabled = item.enabled,
+                            keyboardOptions = KeyboardOptions(
+                                keyboardType = if (item.numeric) KeyboardType.Decimal else KeyboardType.Text,
+                                imeAction = if (k == item.labels.lastIndex) ImeAction.Done else ImeAction.Next),
+                            keyboardActions = KeyboardActions(onDone = { send(i, org.json.JSONArray(vals.toList())) }))
+                    }
+                }
+                FilledTonalButton(onClick = { send(i, org.json.JSONArray(vals.toList())) }, enabled = item.enabled,
+                    modifier = Modifier.fillMaxWidth()) { Text(item.button) }
+            }
         }
+    }
+    ask?.let { (bi, b) ->
+        AlertDialog(
+            onDismissRequest = { ask = null },
+            title = { Text(b.label) },
+            text = { Text(b.confirm.orEmpty()) },
+            confirmButton = {
+                TextButton(onClick = { ask = null; send(bi, null) },
+                    colors = if (b.style == "danger") ButtonDefaults.textButtonColors(contentColor = cs.error) else ButtonDefaults.textButtonColors()) {
+                    Text(b.label)
+                }
+            },
+            dismissButton = { TextButton(onClick = { ask = null }) { Text(tr(R.string.cancel)) } },
+        )
     }
 }
 
@@ -394,8 +446,12 @@ private fun CatalogSection(
         }
     }
     catalog.error?.let { Text(tr(R.string.catalog_error, it), color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall) }
-    val list = catalog.plugins
-    if (list != null && list.isEmpty()) Text(tr(R.string.catalog_empty), style = MaterialTheme.typography.bodySmall)
+    // установленные и актуальные не дублируем — они и так в списке ниже
+    val all = catalog.plugins
+    val list = all?.filter { c -> installed[c.id]?.let { Versions.isNewer(c.version, it) } ?: true || busyId == c.id }
+    if (all != null && all.isEmpty()) Text(tr(R.string.catalog_empty), style = MaterialTheme.typography.bodySmall)
+    else if (list != null && list.isEmpty()) Text(tr(R.string.catalog_all_installed), style = MaterialTheme.typography.bodySmall,
+        color = MaterialTheme.colorScheme.onSurfaceVariant)
     for (c in list.orEmpty()) Card(Modifier.fillMaxWidth()) {
         Column(Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically) {

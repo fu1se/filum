@@ -46,13 +46,17 @@ import java.util.Date
 import java.util.Locale
 
 @Composable
-fun ConsoleScreen(log: List<LogLine>, connected: Boolean, client: PrinterClient) {
+fun ConsoleScreen(log: List<LogLine>, connected: Boolean, client: PrinterClient, device: Boolean = false) {
     var input by rememberSaveable { mutableStateOf("") }
     var verbose by remember { mutableStateOf(client.verboseLog) }
     val listState = rememberLazyListState()
     val timeFmt = remember { SimpleDateFormat("HH:mm:ss", Locale.getDefault()) }
 
-    LaunchedEffect(log.size) { if (log.isNotEmpty()) listState.animateScrollToItem(log.lastIndex) }
+    // докручиваем к новым строкам, только если пользователь и так внизу — иначе не мешаем читать
+    LaunchedEffect(log.size) {
+        val last = listState.layoutInfo.visibleItemsInfo.lastOrNull()?.index ?: -1
+        if (log.isNotEmpty() && last >= log.size - 4) listState.animateScrollToItem(log.lastIndex)
+    }
 
     fun send() {
         val cmd = input.trim()
@@ -86,7 +90,9 @@ fun ConsoleScreen(log: List<LogLine>, connected: Boolean, client: PrinterClient)
             Modifier.horizontalScroll(rememberScrollState()).padding(horizontal = 8.dp, vertical = 4.dp),
             horizontalArrangement = Arrangement.spacedBy(6.dp),
         ) {
-            listOf("G28", "M84", "BED_MESH_CALIBRATE", "SAVE_CONFIG", "FIRMWARE_RESTART").forEach { c ->
+            // у GRBL свои команды; RESTART-подобных среди них нет
+            (if (device) listOf("\$H", "\$X", "\$\$", "\$#", "G0 X0 Y0", "M5")
+            else listOf("G28", "M84", "BED_MESH_CALIBRATE", "SAVE_CONFIG", "FIRMWARE_RESTART")).forEach { c ->
                 ChipButton(c, enabled = connected) { input = c }
             }
         }
@@ -97,7 +103,8 @@ fun ConsoleScreen(log: List<LogLine>, connected: Boolean, client: PrinterClient)
                 modifier = Modifier.weight(1f),
                 singleLine = true,
                 placeholder = { Text(tr(R.string.gcode_command)) },
-                keyboardOptions = KeyboardOptions(imeAction = ImeAction.Send),
+                keyboardOptions = KeyboardOptions(imeAction = ImeAction.Send, autoCorrectEnabled = false,
+                    capitalization = androidx.compose.ui.text.input.KeyboardCapitalization.Characters),
                 keyboardActions = KeyboardActions(onSend = { send() }),
             )
             IconButton(onClick = { send() }, enabled = connected && input.isNotBlank()) {

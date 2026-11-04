@@ -3,6 +3,17 @@ package app.filum.ui
 import app.filum.tr
 import app.filum.R
 import androidx.compose.foundation.border
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.TextButton
+import androidx.compose.runtime.mutableStateListOf
+import androidx.compose.runtime.toMutableStateList
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -115,11 +126,20 @@ fun ControlScreen(state: PrinterState, connected: Boolean, client: PrinterClient
         }
 
         Section(tr(R.string.movement)) {
-            state.position?.let {
-                Text(it, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
-            }
+            val isDevice = device.isNotEmpty()
+            state.xyz?.let { PositionReadout(it, if (isDevice) 3 else 2) }
+                ?: state.position?.let { Text(it, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant) }
             if (state.isPrinting) {
                 Text(tr(R.string.move_blocked), color = MaterialTheme.colorScheme.error)
+            } else if (isDevice && connected && state.printState == "error") {
+                // GRBL в аварии: джог не примет, пока не разблокировать или не сделать Home
+                Row(Modifier.fillMaxWidth().clip(androidx.compose.foundation.shape.RoundedCornerShape(12.dp))
+                    .background(MaterialTheme.colorScheme.errorContainer).padding(horizontal = 12.dp, vertical = 6.dp),
+                    verticalAlignment = Alignment.CenterVertically) {
+                    Text(tr(R.string.cnc_alarm_hint), Modifier.weight(1f), color = MaterialTheme.colorScheme.onErrorContainer,
+                        style = MaterialTheme.typography.bodyMedium)
+                    TextButton(onClick = { client.sendRaw("\$X") }) { Text(tr(R.string.cnc_unlock)) }
+                }
             } else if (connected && state.homedAxes != "xyz") {
                 Text(
                     tr(R.string.not_homed, state.homedAxes.ifEmpty { tr(R.string.none) }),
@@ -127,30 +147,32 @@ fun ControlScreen(state: PrinterState, connected: Boolean, client: PrinterClient
                     style = MaterialTheme.typography.bodySmall,
                 )
             }
-            FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                // ЧПУ и прочие устройства без Klipper — ещё и 0.01 мм
+            Text(tr(R.string.jog_step), style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                // ЧПУ и прочие устройства без Klipper — ещё и 0.01 мм; подпись без «мм», чтобы все шаги влезли в строку
                 (if (caps.klipper) listOf(0.1, 1.0, 10.0, 50.0) else listOf(0.01, 0.1, 1.0, 10.0, 50.0)).forEach { s ->
-                    ChipButton(tr(R.string.mm_fmt, if (s < 1) s else s.toInt()), selected = step == s) { step = s }
+                    ChipButton(if (s < 1) s.toString() else s.toInt().toString(), selected = step == s, modifier = Modifier.weight(1f)) { step = s }
                 }
             }
-            Row(verticalAlignment = Alignment.CenterVertically) {
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Center, verticalAlignment = Alignment.CenterVertically) {
                 // Крестовина XY
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
                     JogButton(Icons.Default.ArrowUpward, "Y+", canMove) { client.move('Y', step, 6000) }
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         JogButton(Icons.AutoMirrored.Filled.ArrowBack, "X−", canMove) { client.move('X', -step, 6000) }
-                        FilledTonalIconButton(onClick = { client.home("X Y") }, enabled = canMove, modifier = Modifier.size(56.dp)
-                            .border(tonalBorder(canMove), androidx.compose.foundation.shape.CircleShape)) {
-                            Icon(Icons.Default.Home, tr(R.string.home_xy))
+                        // у ЧПУ Home — только общий цикл ($H)
+                        FilledTonalIconButton(onClick = { if (isDevice) client.home() else client.home("X Y") }, enabled = canMove,
+                            modifier = Modifier.size(56.dp).border(tonalBorder(canMove), androidx.compose.foundation.shape.CircleShape)) {
+                            Icon(Icons.Default.Home, if (isDevice) tr(R.string.home_all) else tr(R.string.home_xy))
                         }
                         JogButton(Icons.AutoMirrored.Filled.ArrowForward, "X+", canMove) { client.move('X', step, 6000) }
                     }
                     JogButton(Icons.Default.ArrowDownward, "Y−", canMove) { client.move('Y', -step, 6000) }
                 }
-                Spacer(Modifier.width(24.dp))
+                Spacer(Modifier.width(32.dp))
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
                     JogButton(Icons.Default.ArrowUpward, "Z+", canMove) { client.move('Z', step, 600) }
-                    Text("Z", style = MaterialTheme.typography.labelLarge, modifier = Modifier.padding(vertical = 14.dp))
+                    Spacer(Modifier.size(56.dp))
                     JogButton(Icons.Default.ArrowDownward, "Z−", canMove) { client.move('Z', -step, 600) }
                 }
             }
@@ -161,9 +183,10 @@ fun ControlScreen(state: PrinterState, connected: Boolean, client: PrinterClient
             )
             FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 FilledTonalButton(onClick = { client.home() }, enabled = canMove, border = tonalBorder(canMove)) { Text(tr(R.string.home_all)) }
-                OutlinedButton(onClick = { client.home("Z") }, enabled = canMove) { Text(tr(R.string.home_z)) }
+                if (!isDevice) OutlinedButton(onClick = { client.home("Z") }, enabled = canMove) { Text(tr(R.string.home_z)) }
                 if (caps.klipper) OutlinedButton(onClick = { client.motorsOff() }, enabled = canMove) { Text(tr(R.string.motors_off)) }
             }
+            GoToRow(state, canMove && (isDevice || state.homedAxes == "xyz"), client)
         }
 
         if (caps.nozzleDiameter) Section(tr(R.string.nozzle)) {
@@ -250,6 +273,46 @@ fun ControlScreen(state: PrinterState, connected: Boolean, client: PrinterClient
             library = slicerUi.library, onLoadLibrary = slicerVm::loadLibrary, onDismiss = { tagFor = null },
             initialMaterialId = p.materialId, initialColor = p.color,
         )
+    }
+}
+
+/** Позиция крупно: X / Y / Z (у ЧПУ — рабочие координаты). */
+@Composable
+private fun PositionReadout(p: List<Double>, decimals: Int) {
+    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceEvenly) {
+        listOf("X", "Y", "Z").forEachIndexed { i, a ->
+            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                Text(a, style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Text("%.${decimals}f".format(java.util.Locale.US, p[i] + 0.0),
+                    style = MaterialTheme.typography.titleLarge.copy(fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace))
+            }
+        }
+    }
+}
+
+/** Переезд в абсолютные координаты: пустое поле — ось на месте. */
+@Composable
+private fun GoToRow(state: PrinterState, enabled: Boolean, client: PrinterClient) {
+    val f = rememberSaveable(saver = androidx.compose.runtime.saveable.listSaver(
+        save = { it.toList() }, restore = { it.toMutableStateList() })) { mutableStateListOf("", "", "") }
+    fun num(t: String) = t.trim().replace(',', '.').toDoubleOrNull()
+    val bad = f.any { it.isNotBlank() && num(it) == null }
+    val go = { if (!bad) client.moveTo(num(f[0]), num(f[1]), num(f[2])) }
+    Text(tr(R.string.goto_title), style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        listOf("X", "Y", "Z").forEachIndexed { i, a ->
+            OutlinedTextField(f[i], { f[i] = it }, label = { Text(a) }, singleLine = true, modifier = Modifier.weight(1f),
+                isError = f[i].isNotBlank() && num(f[i]) == null,
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal, imeAction = if (i == 2) ImeAction.Go else ImeAction.Next),
+                keyboardActions = KeyboardActions(onGo = { go() }))
+        }
+    }
+    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        OutlinedButton(onClick = {
+            state.xyz?.forEachIndexed { i, v -> f[i] = "%.3f".format(java.util.Locale.US, v + 0.0).trimEnd('0').trimEnd('.') }
+        }, enabled = state.xyz != null) { Text(tr(R.string.goto_current)) }
+        FilledTonalButton(onClick = go, enabled = enabled && !bad && f.any { it.isNotBlank() }, modifier = Modifier.weight(1f),
+            border = tonalBorder(enabled)) { Text(tr(R.string.goto_go)) }
     }
 }
 

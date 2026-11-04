@@ -32,7 +32,6 @@ import okhttp3.Response
 import okhttp3.WebSocket
 import okhttp3.WebSocketListener
 import org.json.JSONObject
-import java.util.concurrent.Executors
 import java.util.concurrent.ScheduledFuture
 import java.util.concurrent.TimeUnit
 
@@ -55,7 +54,8 @@ class PrintMonitorService : Service() {
         .readTimeout(0, TimeUnit.SECONDS)
         .pingInterval(30, TimeUnit.SECONDS)
         .build()
-    private val exec = Executors.newSingleThreadScheduledExecutor()
+    // после onDestroy колбэки OkHttp ещё приходят: задачи в остановленный поток тихо отбрасываются, а не роняют процесс
+    private val exec = java.util.concurrent.ScheduledThreadPoolExecutor(1, java.util.concurrent.ThreadPoolExecutor.DiscardPolicy())
 
     private var ws: WebSocket? = null
     private var host = ""

@@ -66,6 +66,9 @@ fun DashboardScreen(
     webrtc: Boolean? = null,
     /** Службы Creality сообщили, что камеры нет (K1 SE, Ender-3 V3): в режиме «Авто» блок не показываем. */
     noCamera: Boolean = false,
+    /** Устройство на драйвере (ЧПУ): «задание» вместо «печати», без слоёв. */
+    device: Boolean = false,
+    onReconnect: () -> Unit = {},
 ) {
     val camMode = settings.effectiveCameraMode(webrtc)
     val camUrl = settings.resolvedCameraUrl(webrtc)
@@ -98,7 +101,7 @@ fun DashboardScreen(
             }
         }
 
-        Section(tr(R.string.print_section)) {
+        Section(tr(if (device) R.string.job_section else R.string.print_section)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Text(
                     when (busy) {
@@ -110,32 +113,38 @@ fun DashboardScreen(
                     Modifier.weight(1f),
                     style = MaterialTheme.typography.titleLarge,
                     color = when {
-                        state.isError -> MaterialTheme.colorScheme.error
+                        state.isError || !connected -> MaterialTheme.colorScheme.error
                         state.hasActiveJob -> Accent
                         else -> MaterialTheme.colorScheme.onSurface
                     },
                 )
                 state.progress?.let { Text("$it%", style = MaterialTheme.typography.titleLarge) }
             }
-            (state.printMessage ?: state.klippyMessage?.takeIf { state.isError })?.let {
-                Text(it, color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall)
+            // сообщение, если оно не повторяет заголовок (у устройства без связи текст ошибки и есть статус)
+            (state.printMessage ?: state.klippyMessage?.takeIf { state.isError })?.takeIf { it != state.statusText }?.let {
+                Text(it, color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall,
+                    maxLines = 3, overflow = TextOverflow.Ellipsis)
             }
             state.fileName?.let { Text(it, maxLines = 2, overflow = TextOverflow.Ellipsis) }
-            LinearProgressIndicator(
+            // без задания полоса пустая и только сбивает с толку
+            if (state.hasActiveJob || state.progress != null) LinearProgressIndicator(
                 progress = { (state.progress ?: 0) / 100f },
                 modifier = Modifier.fillMaxWidth().height(6.dp),
                 trackColor = TrackColor,
             )
-            Row {
+            if (state.hasActiveJob || state.jobTimeSec != null) Row {
                 InfoCell(tr(R.string.elapsed), fmtDuration(state.jobTimeSec), Modifier.weight(1f))
                 InfoCell(tr(R.string.remaining), fmtDuration(state.leftTimeSec), Modifier.weight(1f))
-                InfoCell(
+                if (!device) InfoCell(
                     tr(R.string.layer),
                     if (state.layer != null) "${state.layer} / ${state.totalLayers ?: "?"}" else "—",
                     Modifier.weight(1f),
                 )
             }
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            if (!connected && !state.hasActiveJob) {
+                // нет связи: вместо трёх неактивных кнопок — одна, которая что-то делает
+                FilledTonalButton(onClick = onReconnect, modifier = Modifier.fillMaxWidth()) { Text(tr(R.string.connect)) }
+            } else Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 FilledTonalButton(
                     onClick = { client.pause() },
                     enabled = connected && state.isPrinting && busy == null,
@@ -190,7 +199,7 @@ fun DashboardScreen(
     if (confirmStop) {
         AlertDialog(
             onDismissRequest = { confirmStop = false },
-            title = { Text(tr(R.string.stop_print_q)) },
+            title = { Text(tr(if (device) R.string.stop_job_q else R.string.stop_print_q)) },
             text = { Text(tr(R.string.stop_print_desc)) },
             confirmButton = {
                 TextButton(onClick = { client.stop(); confirmStop = false }) {

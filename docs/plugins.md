@@ -118,6 +118,11 @@ const id = filum.ui.section('Title', [
   { type: 'switch', label: 'Enabled', value: true, onChange: on => … },
   { type: 'slider', label: 'Fan %', min: 0, max: 100, step: 5, value: 50, onChange: v => … },
   { type: 'input',  label: 'URL', value: '', button: 'Save', onSubmit: text => … },
+  // API 2:
+  { type: 'fields', fields: [{ label: 'X', value: '0' }, { label: 'Y', value: '0' }], numeric: true,
+    button: 'Save', onSubmit: values => … },            // values: array of strings, same order
+  { type: 'button', label: 'Reset', style: 'danger', confirm: 'Reset the machine?', onClick: () => … },
+  { type: 'text',   text: 'Small grey note', style: 'hint' },   // or 'label' for a group heading
 ])
 filum.ui.update(id, items[, title])   // replace the items (e.g. to refresh text or a switch)
 filum.ui.remove(id)
@@ -126,6 +131,10 @@ filum.ui.toast('Done')
 
 - **Where sections appear.** On the Control tab. Consecutive buttons are laid out in one row.
 - **When handlers run.** A slider reports its value when it is released.
+- **API 2 additions.** Every item takes `enabled: false` (shown greyed out, e.g. while the device is offline). Buttons take
+  `style: 'danger'` (red) and `confirm` (a question asked before `onClick`). Texts take `style: 'hint'` or `'label'`.
+  `fields` puts up to six inputs in one row with one button. Check `filum.version >= 2` before using them: version 1
+  apps reject unknown item types.
 
 ### Timers
 
@@ -146,7 +155,7 @@ Timers stop when the plugin is unloaded.
 | `filum.http.post(url, body[, contentType])` 🌐 | an object body is sent as JSON |
 | `filum.notify(title, text)` 🔔 | |
 | `filum.log(…)`, `console.log/info/warn/error(…)` | to the plugin log and the app console |
-| `filum.id`, `filum.version` | plugin id, API version (`1`) |
+| `filum.id`, `filum.version` | plugin id, API version (`2`; `1` before Filum 0.2.3) |
 
 🌐 needs `@grant http`, 🔔 needs `@grant notify`.
 

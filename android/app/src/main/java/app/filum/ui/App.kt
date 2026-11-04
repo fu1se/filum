@@ -83,6 +83,7 @@ private val tabs = listOf(
 /** Консоль открывается иконкой в верхней панели — шесть вкладок внизу не помещаются. */
 private const val CONSOLE_TAB = 5
 private const val SLICER_TAB = 2
+private const val TIMELAPSE_TAB = 4
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -110,6 +111,7 @@ fun App(vm: PrinterViewModel, slicerVm: SlicerViewModel) {
     val crealityInfo by vm.creality.info.collectAsStateWithLifecycle()
     LaunchedEffect(state.nozzleDiameter) { slicerVm.setNozzle(state.nozzleDiameter) }
     LaunchedEffect(crealityInfo?.modelName) { slicerVm.setPrinterModel(crealityInfo?.modelName) }
+    LaunchedEffect(isDevice) { if (isDevice && (tab == SLICER_TAB || tab == TIMELAPSE_TAB)) tab = 0 }
     LaunchedEffect(openSlicer) {
         if (openSlicer) { tab = SLICER_TAB; slicerVm.openSlicerTab.value = false }
     }
@@ -120,7 +122,8 @@ fun App(vm: PrinterViewModel, slicerVm: SlicerViewModel) {
                 title = {
                     Column(Modifier.clickable { printerMenu = true }) {
                         Row(verticalAlignment = Alignment.CenterVertically) {
-                            Text(settings.name.ifBlank { null } ?: state.hostname ?: "Filum", maxLines = 1)
+                            Text(settings.name.ifBlank { null } ?: state.hostname ?: settings.host.ifBlank { "Filum" }, maxLines = 1,
+                                overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis, modifier = Modifier.weight(1f, fill = false))
                             Icon(Icons.Default.ArrowDropDown, tr(R.string.printers))
                         }
                         // список принтеров: переключение и добавление
@@ -201,25 +204,24 @@ fun App(vm: PrinterViewModel, slicerVm: SlicerViewModel) {
                     val cam = state.cameraUrl
                     DashboardScreen(state, connected,
                         settings.copy(cameraMode = if (cam != null) CameraMode.MJPEG else CameraMode.OFF, cameraUrl = cam.orEmpty()),
-                        vm.client, null, null, noCamera = cam == null)
+                        vm.client, null, null, noCamera = cam == null, device = true, onReconnect = vm::reconnect)
                 } else {
                     val screenFault by vm.creality.fault.collectAsStateWithLifecycle()
                     val gcodeFault by vm.client.fault.collectAsStateWithLifecycle()
                     DashboardScreen(state, connected, settings, vm.client, pickFault(screenFault, gcodeFault, state),
-                        crealityInfo?.webrtc, noCamera = crealityInfo?.camera == false)
+                        crealityInfo?.webrtc, noCamera = crealityInfo?.camera == false, onReconnect = vm::reconnect)
                 }
                 1 -> ControlScreen(state, connected, vm.client, slicerVm, expert = settings.expert, device = settings.driver)
                 2 -> SlicerScreen(slicerVm, connected)
-                3 -> FilesScreen(files, state, connected, vm.client)
+                3 -> FilesScreen(files, state, connected, vm.client, device = isDevice)
                 4 -> TimelapseScreen(vm, timelapses, settings.hostOnly())
-                CONSOLE_TAB -> ConsoleScreen(log, connected, vm.client)
+                CONSOLE_TAB -> ConsoleScreen(log, connected, vm.client, device = isDevice)
             }
         }
     }
 
     if (showPlugins) PluginsScreen(onClose = { showPlugins = false })
     LaunchedEffect(Unit) { updateFound = backgroundUpdateCheck(context) }
-    if (updateFound != null || updateManual) UpdateDialog(found = updateFound) { updateFound = null; updateManual = false }
     if (showSettings) {
         val adding = addingPrinter || settings.host.isBlank()
         SettingsDialog(
@@ -228,7 +230,8 @@ fun App(vm: PrinterViewModel, slicerVm: SlicerViewModel) {
             canDelete = !adding && printers.size > 1,
             canCancel = printers.isNotEmpty(),
             onDismiss = { showSettings = false; addingPrinter = false },
-            onCheckUpdates = { showSettings = false; addingPrinter = false; updateManual = true },
+            // окно обновления — поверх настроек, несохранённые правки не теряются
+            onCheckUpdates = { updateManual = true },
             onDelete = {
                 activeId?.let { vm.deletePrinter(it) }
                 showSettings = false; slicerVm.reload()
@@ -242,6 +245,8 @@ fun App(vm: PrinterViewModel, slicerVm: SlicerViewModel) {
             },
         )
     }
+    // после настроек: окно обновления открывается поверх них
+    if (updateFound != null || updateManual) UpdateDialog(found = updateFound) { updateFound = null; updateManual = false }
 }
 
 @Composable
@@ -332,8 +337,9 @@ private fun SettingsDialog(
                         modifier = Modifier.fillMaxWidth(),
                     )
                 }
-                Text(tr(R.string.tab_slicer), style = MaterialTheme.typography.titleSmall)
-                OutlinedTextField(
+                // слайсер общий для принтеров; у ЧПУ его нет — поле не показываем (значение сохраняется)
+                if (driver.isEmpty()) Text(tr(R.string.tab_slicer), style = MaterialTheme.typography.titleSmall)
+                if (driver.isEmpty()) OutlinedTextField(
                     value = slicerUrl,
                     onValueChange = { slicerUrl = it.trim() },
                     label = { Text(tr(R.string.slicer_url)) },

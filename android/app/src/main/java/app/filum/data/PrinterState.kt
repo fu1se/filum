@@ -27,6 +27,8 @@ data class PrinterState(
     val layer: Int? = null,
     val totalLayers: Int? = null,
     val position: String? = null,
+    /** Та же позиция числами [x, y, z] (у ЧПУ — рабочие координаты). */
+    val xyz: List<Double>? = null,
     /** gcode_move.homing_origin[2] — текущее смещение Z (SET_GCODE_OFFSET), START_PRINT у K2 его обнуляет. */
     val gcodeZOffset: Double? = null,
     val homedAxes: String = "",
@@ -79,12 +81,14 @@ data class PrinterState(
                 jobTimeSec = o.dbl("printTime")?.toLong(),
                 leftTimeSec = o.dbl("timeLeft")?.toLong(),
                 position = pos?.let { "X %.3f  Y %.3f  Z %.3f".format(it.optDouble(0), it.optDouble(1), it.optDouble(2)) },
+                xyz = pos?.let { a -> (0..2).map { a.optDouble(it) } }?.takeIf { l -> l.none { it.isNaN() } },
                 homedAxes = o.optString("homed", "xyz"),
                 speedPct = o.dbl("speedPct")?.toInt(),
                 hostname = o.optString("name").ifBlank { null },
                 caps = caps,
-                statusOverride = o.optString("status").ifBlank { null }
-                    ?: if (!o.optBoolean("connected")) o.optString("message").ifBlank { null } else null,
+                // без связи — короткий статус, а подробность (адрес, ошибка) — строкой ниже
+                statusOverride = if (!o.optBoolean("connected")) app.filum.tr(app.filum.R.string.not_connected)
+                    else o.optString("status").ifBlank { null },
                 cameraUrl = o.optString("camera").ifBlank { null },
             )
         }
@@ -134,6 +138,7 @@ data class PrinterState(
                 position = pos?.let {
                     "X %.2f  Y %.2f  Z %.2f".format(it.optDouble(0), it.optDouble(1), it.optDouble(2))
                 },
+                xyz = pos?.let { a -> (0..2).map { a.optDouble(it) } }?.takeIf { l -> l.none { it.isNaN() } },
                 homedAxes = o["toolhead"]?.optString("homed_axes").orEmpty(),
                 gcodeZOffset = move?.optJSONArray("homing_origin")?.optDouble(2)?.takeIf { !it.isNaN() },
                 modelFanPct = o["output_pin fan0"]?.pct("value") ?: o["fan"]?.pct("speed"),
